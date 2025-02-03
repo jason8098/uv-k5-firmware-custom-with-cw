@@ -15,7 +15,7 @@
  */
 
 #include <string.h>
-
+#include "app/morse.h"
 #include "app/action.h"
 #include "app/app.h"
 #include "app/chFrScanner.h"
@@ -42,43 +42,8 @@
 #include "ui/inputbox.h"
 #include "ui/ui.h"
 #include <stdlib.h>
+#include "driver/system.h"
 
-static void toggle_chan_scanlist(void)
-{   // toggle the selected channels scanlist setting
-
-    if (SCANNER_IsScanning())
-        return;
-
-    if(!IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
-#ifdef ENABLE_SCAN_RANGES
-        gScanRangeStart = gScanRangeStart ? 0 : gTxVfo->pRX->Frequency;
-        gScanRangeStop = gEeprom.VfoInfo[!gEeprom.TX_VFO].freq_config_RX.Frequency;
-        if(gScanRangeStart > gScanRangeStop)
-            SWAP(gScanRangeStart, gScanRangeStop);
-#endif
-        return;
-    }
-    
-    // Remove exclude
-    if(gMR_ChannelExclude[gTxVfo->CHANNEL_SAVE] == true)
-    {
-        gMR_ChannelExclude[gTxVfo->CHANNEL_SAVE] = false;
-        return;
-    }
-
-    uint8_t scanTmp = gTxVfo->SCANLIST1_PARTICIPATION | (gTxVfo->SCANLIST2_PARTICIPATION << 1) | (gTxVfo->SCANLIST3_PARTICIPATION << 2);
-
-    scanTmp = (scanTmp++ < 7) ? scanTmp: 0;
-
-    gTxVfo->SCANLIST1_PARTICIPATION = (scanTmp >> 0) & 0x01;
-    gTxVfo->SCANLIST2_PARTICIPATION = (scanTmp >> 1) & 0x01;
-    gTxVfo->SCANLIST3_PARTICIPATION = (scanTmp >> 2) & 0x01;
-
-    SETTINGS_UpdateChannel(gTxVfo->CHANNEL_SAVE, gTxVfo, true, true, true);
-
-    gVfoConfigureMode = VFO_CONFIGURE;
-    gFlagResetVfos    = true;
-}
 
 static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 {
@@ -103,7 +68,7 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
     }
     
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-
+    
     switch (Key) {
         case KEY_0:
             #ifdef ENABLE_FMRADIO
@@ -204,6 +169,7 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             break;
 
         case KEY_4:
+        
             gWasFKeyPressed          = false;
 
             gBackup_CROSS_BAND_RX_TX  = gEeprom.CROSS_BAND_RX_TX;
@@ -217,28 +183,7 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             break;
 
         case KEY_5:
-            if(beep) {
-#ifdef ENABLE_NOAA
-                if (!IS_NOAA_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
-                    gEeprom.ScreenChannel[Vfo] = gEeprom.NoaaChannel[gEeprom.TX_VFO];
-                }
-                else {
-                    gEeprom.ScreenChannel[Vfo] = gEeprom.MrChannel[gEeprom.TX_VFO];
-#ifdef ENABLE_VOICE
-                        gAnotherVoiceID = VOICE_ID_CHANNEL_MODE;
-#endif
-                }
-                gRequestSaveVFO   = true;
-                gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
-#elif defined(ENABLE_SPECTRUM)
-                APP_RunSpectrum();
-                gRequestDisplayScreen = DISPLAY_MAIN;
-#endif
-            }
-            else {
-                toggle_chan_scanlist();
-            }
-
+             //APP_RunSpectrum(); //disabled due to morse function
             break;
 
         case KEY_6:
@@ -258,22 +203,16 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             gRequestSaveChannel = 1;
             break;
 
+        
         case KEY_9:
-            if (RADIO_CheckValidChannel(gEeprom.CHAN_1_CALL, false, 0)) {
-                gEeprom.MrChannel[Vfo]     = gEeprom.CHAN_1_CALL;
-                gEeprom.ScreenChannel[Vfo] = gEeprom.CHAN_1_CALL;
-#ifdef ENABLE_VOICE
-                AUDIO_SetVoiceID(0, VOICE_ID_CHANNEL_MODE);
-                AUDIO_SetDigitVoice(1, gEeprom.CHAN_1_CALL + 1);
-                gAnotherVoiceID        = (VOICE_ID_t)0xFE;
-#endif
-                gRequestSaveVFO            = true;
-                gVfoConfigureMode          = VFO_CONFIGURE_RELOAD;
-                break;
-            }
-
-            if (beep)
-                gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        while(true){
+                GUI_DisplayScreen();
+                RADIO_SetTxParameters();
+                const char *message = "CQ CQ DS4WOF/FOXHUNT"; //main message. edit this 
+                TransmitMorse(message);
+                BK4819_Disable();
+                SYSTEM_DelayMs(60000); //transmit interval in ms. default is 60s (60000)
+             }
             break;
 
 #ifdef ENABLE_FEAT_F4HWN // Set Squelch F + UP or Down and Step F + SIDE1 or F + SIDE2

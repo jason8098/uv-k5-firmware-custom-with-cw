@@ -184,6 +184,14 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 
         case KEY_5:
              //APP_RunSpectrum(); //disabled due to morse function
+             while(true){
+                GUI_DisplayScreen();
+                RADIO_SetTxParameters();
+                const char *message = "CQ CQ DS4WOF/FOXHUNT"; //main message. edit this 
+                TransmitMorse(message);
+                BK4819_Disable();
+                SYSTEM_DelayMs(60000); //transmit interval in ms. default is 60s (60000)
+             }
             break;
 
         case KEY_6:
@@ -205,14 +213,21 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 
         
         case KEY_9:
-        while(true){
-                GUI_DisplayScreen();
-                RADIO_SetTxParameters();
-                const char *message = "CQ CQ DS4WOF/FOXHUNT"; //main message. edit this 
-                TransmitMorse(message);
-                BK4819_Disable();
-                SYSTEM_DelayMs(60000); //transmit interval in ms. default is 60s (60000)
-             }
+        if (RADIO_CheckValidChannel(gEeprom.CHAN_1_CALL, false, 0)) {
+                gEeprom.MrChannel[Vfo]     = gEeprom.CHAN_1_CALL;
+                gEeprom.ScreenChannel[Vfo] = gEeprom.CHAN_1_CALL;
+#ifdef ENABLE_VOICE
+                AUDIO_SetVoiceID(0, VOICE_ID_CHANNEL_MODE);
+                AUDIO_SetDigitVoice(1, gEeprom.CHAN_1_CALL + 1);
+                gAnotherVoiceID        = (VOICE_ID_t)0xFE;
+#endif
+                gRequestSaveVFO            = true;
+                gVfoConfigureMode          = VFO_CONFIGURE_RELOAD;
+                break;
+            }
+
+            if (beep)
+                gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
             break;
 
 #ifdef ENABLE_FEAT_F4HWN // Set Squelch F + UP or Down and Step F + SIDE1 or F + SIDE2

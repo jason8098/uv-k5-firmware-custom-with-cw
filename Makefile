@@ -144,10 +144,8 @@ endif
 OBJS += app/generic.o
 OBJS += app/main.o
 OBJS += app/menu.o
-ifeq ($(ENABLE_SPECTRUM), 1)
-OBJS += app/spectrum.o
-endif
 OBJS += app/scanner.o
+OBJS += app/morse.o
 ifeq ($(ENABLE_UART),1)
 	OBJS += app/uart.o
 endif

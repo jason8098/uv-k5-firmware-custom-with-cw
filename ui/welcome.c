@@ -31,7 +31,7 @@
 void UI_DisplayReleaseKeys(void)
 {
     memset(gStatusLine,  0, sizeof(gStatusLine));
-#ifdef ENABLE_FEAT_F4HWN
+#if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
         ST7565_ContrastAndInv();
 #endif
     UI_DisplayClear();
@@ -52,7 +52,7 @@ void UI_DisplayWelcome(void)
 
     memset(gStatusLine,  0, sizeof(gStatusLine));
 
-#ifdef ENABLE_FEAT_F4HWN
+#if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
         ST7565_ContrastAndInv();
 #endif
     UI_DisplayClear();

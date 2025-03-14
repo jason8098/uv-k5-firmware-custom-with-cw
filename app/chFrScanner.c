@@ -78,6 +78,7 @@ void CHFRSCANNER_Start(const bool storeBackupSettings, const int8_t scan_directi
     gScanPauseMode         = false;
 }
 
+/*
 void CHFRSCANNER_ContinueScanning(void)
 {
     if (IS_FREQ_CHANNEL(gNextMrChannel))
@@ -95,6 +96,24 @@ void CHFRSCANNER_ContinueScanning(void)
             NextMemChannel();    // switch to next channel
     }
     
+    gScanPauseMode      = false;
+    gRxReceptionMode    = RX_MODE_NONE;
+    gScheduleScanListen = false;
+}
+*/
+
+void CHFRSCANNER_ContinueScanning(void)
+{
+    if (gCurrentFunction == FUNCTION_INCOMING &&
+        (IS_FREQ_CHANNEL(gNextMrChannel) || gCurrentCodeType == CODE_TYPE_OFF))
+    {
+        APP_StartListening(gMonitor ? FUNCTION_MONITOR : FUNCTION_RECEIVE);
+    }
+    else
+    {
+        IS_FREQ_CHANNEL(gNextMrChannel) ? NextFreqChannel() : NextMemChannel();
+    }
+
     gScanPauseMode      = false;
     gRxReceptionMode    = RX_MODE_NONE;
     gScheduleScanListen = false;
@@ -196,7 +215,7 @@ void CHFRSCANNER_Stop(void)
         }
     }
 
-    #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
         gEeprom.CURRENT_STATE = 0;
         SETTINGS_WriteCurrentState();
     #endif

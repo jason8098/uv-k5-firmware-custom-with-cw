@@ -72,10 +72,9 @@ static void BACKLIGHT_Sound(void)
     {
         AUDIO_PlayBeep(BEEP_880HZ_60MS_DOUBLE_BEEP);
         AUDIO_PlayBeep(BEEP_880HZ_60MS_DOUBLE_BEEP);
-        gK5startup = false;
     }
-    else
-        gK5startup = false;     
+
+    gK5startup = false;
 }
 
 

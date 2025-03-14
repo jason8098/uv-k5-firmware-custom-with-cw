@@ -1213,15 +1213,18 @@ void UI_DisplayMain(void)
             if (gSetting_set_gui)
             {
                 const char pwr_short[][3] = {"L1", "L2", "L3", "L4", "L5", "M", "H"};
-                sprintf(String, "%s", pwr_short[currentPower]);
-                UI_PrintStringSmallNormal(String, LCD_WIDTH + 42, 0, line + 1);
+                //sprintf(String, "%s", pwr_short[currentPower]);
+                //UI_PrintStringSmallNormal(String, LCD_WIDTH + 42, 0, line + 1);
+                UI_PrintStringSmallNormal(pwr_short[currentPower], LCD_WIDTH + 42, 0, line + 1);
+
                 arrowPos = 38;
             }
             else
             {
                 const char pwr_long[][5] = {"LOW1", "LOW2", "LOW3", "LOW4", "LOW5", "MID", "HIGH"};
-                sprintf(String, "%s", pwr_long[currentPower]);
-                GUI_DisplaySmallest(String, 24, line == 0 ? 17 : 49, false, true);
+                //sprintf(String, "%s", pwr_long[currentPower]);
+                //GUI_DisplaySmallest(String, 24, line == 0 ? 17 : 49, false, true);
+                GUI_DisplaySmallest(pwr_long[currentPower], 24, line == 0 ? 17 : 49, false, true);
             }
 
             if(userPower == true)
@@ -1364,15 +1367,15 @@ void UI_DisplayMain(void)
         */
         if (isMainVFO) {
            if (gMonitor) {
-               sprintf(String, "MONI");
+                strcpy(String, "MONI");
            } else {
-               sprintf(String, "SQL%d", gEeprom.SQUELCH_LEVEL);
+                sprintf(String, "SQL%d", gEeprom.SQUELCH_LEVEL);
            }
 
            if (gSetting_set_gui) {
-               UI_PrintStringSmallNormal(String, LCD_WIDTH + 98, 0, line + 1);
+                UI_PrintStringSmallNormal(String, LCD_WIDTH + 98, 0, line + 1);
            } else {
-               GUI_DisplaySmallest(String, 110, line == 0 ? 17 : 49, false, true);
+                GUI_DisplaySmallest(String, 110, line == 0 ? 17 : 49, false, true);
            }
         }
 #endif

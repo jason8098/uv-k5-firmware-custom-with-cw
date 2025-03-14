@@ -112,6 +112,7 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
     if (bKeyHeld || !bKeyPressed) // ignore long press or release button events
         return;
 
+    /*
     if (gScanCssState == SCAN_CSS_STATE_OFF && !gScanSingleFrequency) {
         gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         return;
@@ -123,6 +124,15 @@ static void SCANNER_Key_MENU(bool bKeyPressed, bool bKeyHeld)
     }
 
     if (gScanCssState == SCAN_CSS_STATE_FAILED) {
+        gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+        return;
+    }
+    */
+
+    if (gScanCssState == SCAN_CSS_STATE_FAILED ||  
+        (!gScanSingleFrequency && gScanCssState == SCAN_CSS_STATE_OFF) ||  
+        (gScanSingleFrequency && gScanCssState == SCAN_CSS_STATE_SCANNING))  
+    {
         gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         return;
     }

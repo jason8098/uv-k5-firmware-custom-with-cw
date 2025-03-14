@@ -57,6 +57,22 @@ const uint8_t gFontLight[9] =
     0b00001100,
 };
 
+const uint8_t gFontMute[12] =
+{
+    0b00011100,
+    0b00011100,
+    0b00010100,
+    0b00100010,
+    0b01000001,
+    0b01111111,
+    0b00000000,
+    0b00100010,
+    0b00010100,
+    0b00001000,
+    0b00010100,
+    0b00100010,
+};
+
 const uint8_t gFontXB[2][6] =
 {   // "XB"
     {0x00, 0x63, 0x14, 0x8, 0x14, 0x63},
@@ -240,7 +256,7 @@ const uint8_t BITMAP_ScanListE[7] =
 
 const uint8_t BITMAP_ScanList123[19] =
 {
-    // 'All' symbol
+    // '123' symbol
     0b01111111,
     0b01111111,
     0b01111011,

@@ -111,6 +111,11 @@ void FM_TurnOff(void)
     BK1080_Init0();
 
     gUpdateStatus  = true;
+
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+        gEeprom.CURRENT_STATE = 0;
+        SETTINGS_WriteCurrentState();
+    #endif
 }
 
 void FM_EraseChannels(void)
@@ -617,6 +622,11 @@ void FM_Start(void)
 
     gEnableSpeaker       = true;
     gUpdateStatus        = true;
+
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+        gEeprom.CURRENT_STATE = 3;
+        SETTINGS_WriteCurrentState();
+    #endif
 }
 
 #endif

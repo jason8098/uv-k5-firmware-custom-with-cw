@@ -317,6 +317,7 @@ void channelMoveSwitch(void) {
     if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE)) { // user is entering channel number
         uint16_t Channel = 0;
 
+        /*
         switch (gInputBoxIndex)
         {
             case 1:
@@ -328,6 +329,11 @@ void channelMoveSwitch(void) {
             case 3:
                 Channel = (gInputBox[0] * 100) + (gInputBox[1] * 10) + gInputBox[2];
                 break;
+        }
+        */
+
+        for (uint8_t i = 0; i < gInputBoxIndex; i++) {
+            Channel = (Channel * 10) + gInputBox[i];
         }
 
         if ((Channel == 0) && (gInputBoxIndex != 3)) {
@@ -379,7 +385,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             switch(Key) {
                 case KEY_0...KEY_5:
                     gEeprom.SCAN_LIST_DEFAULT = Key;
-                    #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+                    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
                         SETTINGS_WriteCurrentState();
                     #endif
                     break;
@@ -695,7 +701,7 @@ static void MAIN_Key_STAR(bool bKeyPressed, bool bKeyHeld)
             return; 
 
         /*
-        #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
         if(gScanRangeStart == 0) // No ScanRange
         {
             gEeprom.CURRENT_STATE = 1;

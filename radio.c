@@ -572,6 +572,7 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
     }
     */
 
+    /*
     for(uint8_t p = 0; p < 3; p++)
     {
         switch (currentPower)
@@ -597,6 +598,21 @@ void RADIO_ConfigureSquelchAndOutputPower(VFO_Info_t *pInfo)
             case 6:
                 Txp[p] = Txp[p] + 30;
                 break;              
+        }
+    }
+    */
+
+    static const uint8_t dividers[6] = { 25, 19, 13, 10, 7, 4};
+
+    for (uint8_t p = 0; p < 3; p++)
+    {
+        if (currentPower < 6)
+        {
+            Txp[p] = (Txp[p] * (currentPower == 5 ? 3 : 4)) / dividers[currentPower];
+        }
+        else // case 6
+        {
+            Txp[p] += 30;
         }
     }
 #else

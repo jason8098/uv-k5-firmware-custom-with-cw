@@ -183,7 +183,9 @@ extern enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
     #endif
     extern bool               gSetting_set_tmr;
     extern bool               gSetting_set_ptt_session;
-    extern uint8_t            gDebug;
+    #ifdef ENABLE_FEAT_F4HWN_DEBUG
+        extern uint8_t            gDebug;
+    #endif
     extern uint8_t            gDW;
     extern uint8_t            gCB;
     extern bool               gSaveRxMode;
@@ -377,6 +379,7 @@ extern volatile uint8_t      boot_counter_10ms;
 #ifdef ENABLE_FEAT_F4HWN
     extern bool                  gK5startup;
     extern bool                  gBackLight;
+    extern bool                  gMute;
     extern uint8_t               gBacklightTimeOriginal;
     extern uint8_t               gBacklightBrightnessOld;
     extern uint8_t               gPttOnePushCounter;

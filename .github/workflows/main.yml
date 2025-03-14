@@ -1,49 +1,24 @@
+name: Build Firmware
+
 on:
   push:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    container:
-      image: archlinux:latest
+    runs-on: ubuntu-latest
+
     steps:
-      - name: base-devel
-        run:  pacman -Syyu base-devel --noconfirm
-      - name: arm-none-eabi-gcc
-        run:  pacman -Syyu arm-none-eabi-gcc --noconfirm
-      - name: arm-none-eabi-newlib
-        run:  pacman -Syyu arm-none-eabi-newlib --noconfirm
-      - name: git
-        run:  pacman -Syyu git --noconfirm
-      - name: python-pip
-        run:  pacman -Syyu python-pip --noconfirm
-      - name: python-crcmod
-        run:  pacman -Syyu python-crcmod --noconfirm      
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        
-      - name: safe.directory
-        run:  git config --global --add safe.directory /__w/uv-k5-firmware-custom/uv-k5-firmware-custom        
-      - name: Make
-        run:  make
-      - name: size
-        run:  arm-none-eabi-size firmware
+    - name: Compile firmware
+      run: |
+        chmod +x compile-with-docker.sh
+        ./compile-with-docker.sh
 
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v3
-        with:
-          name: firmware
-          path: firmware*.bin
-
-      - name: Upload binaries to release
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: firmware.packed.bin
-          asset_name: egzumer_$tag.packed.bin
-          tag: ${{ github.ref }}
-          overwrite: true
-          release_name: release ${{ github.ref_name }}     
-   
+    - name: Upload firmware artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-artifact
+        path: compiled-firmware/f4hwn.packed.bin

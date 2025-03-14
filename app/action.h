@@ -42,6 +42,9 @@ void ACTION_SwitchDemodul(void);
     void ACTION_Wn(void);
     void ACTION_BackLightOnDemand(void);
     void ACTION_BackLight(void);
+    #if !defined(ENABLE_SPECTRUM) || !defined(ENABLE_FMRADIO)
+    void ACTION_Mute(void);
+    #endif
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
         void ACTION_Power_High(void);
         void ACTION_Remove_Offset(void);

@@ -77,13 +77,13 @@ void SETTINGS_InitEEPROM(void)
     gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
     gEeprom.BACKLIGHT_TIME        = (Data[5] < 62) ? Data[5] : 12;
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
-        gEeprom.TAIL_TONE_ELIMINATION = ((Data[6] & 0x01) < 2) ? (Data[6] & 0x01) : false;
-        gSetting_set_nfm = (((Data[6] >> 1) & 0x03) < 3) ? ((Data[6] >> 1) & 0x03) : 0;
+        gEeprom.TAIL_TONE_ELIMINATION = Data[6] & 0x01;
+        gSetting_set_nfm = (Data[6] >> 1) & 0x01;
     #else
         gEeprom.TAIL_TONE_ELIMINATION = (Data[6] < 2) ? Data[6] : false;
     #endif
 
-    #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
         gEeprom.VFO_OPEN = Data[7] & 0x01;
         gEeprom.CURRENT_STATE = (Data[7] >> 1) & 0x07;
         gEeprom.CURRENT_LIST = (Data[7] >> 4) & 0x07;
@@ -326,17 +326,19 @@ void SETTINGS_InitEEPROM(void)
         gMR_ChannelExclude[i] = false;
     }
 
-    // 0F30..0F3F
-    EEPROM_ReadBuffer(0x0F30, gCustomAesKey, sizeof(gCustomAesKey));
-    bHasCustomAesKey = false;
-    for (unsigned int i = 0; i < ARRAY_SIZE(gCustomAesKey); i++)
-    {
-        if (gCustomAesKey[i] != 0xFFFFFFFFu)
-        {
-            bHasCustomAesKey = true;
-            return;
-        }
-    }
+        // 0F30..0F3F
+        EEPROM_ReadBuffer(0x0F30, gCustomAesKey, sizeof(gCustomAesKey));
+        bHasCustomAesKey = false;
+        #ifndef ENABLE_FEAT_F4HWN
+            for (unsigned int i = 0; i < ARRAY_SIZE(gCustomAesKey); i++)
+            {
+                if (gCustomAesKey[i] != 0xFFFFFFFFu)
+                {
+                    bHasCustomAesKey = true;
+                    return;
+                }
+            }
+        #endif
 
     #ifdef ENABLE_FEAT_F4HWN
         // 1FF0..0x1FF7
@@ -361,13 +363,21 @@ void SETTINGS_InitEEPROM(void)
 
         int tmp = (Data[5] & 0xF0) >> 4;
 
+#ifdef ENABLE_FEAT_F4HWN_INV
         gSetting_set_inv = (tmp >> 0) & 0x01;
+#else
+        gSetting_set_inv = 0;
+#endif
         gSetting_set_lck = (tmp >> 1) & 0x01;
         gSetting_set_met = (tmp >> 2) & 0x01;
         gSetting_set_gui = (tmp >> 3) & 0x01;
 
+#ifdef ENABLE_FEAT_F4HWN_CTR
         int ctr_value = Data[5] & 0x0F;
         gSetting_set_ctr = (ctr_value > 0 && ctr_value < 16) ? ctr_value : 10;
+#else
+        gSetting_set_ctr = 10;
+#endif
 
         gSetting_set_tmr = Data[4] & 0x01;
 #ifdef ENABLE_FEAT_F4HWN_SLEEP
@@ -433,6 +443,10 @@ void SETTINGS_LoadCalibration(void)
         gEEPROM_1F8C                 = Misc.EEPROM_1F8C & 0x01FF;
         gEeprom.VOLUME_GAIN          = (Misc.VOLUME_GAIN < 64) ? Misc.VOLUME_GAIN : 58;
         gEeprom.DAC_GAIN             = (Misc.DAC_GAIN    < 16) ? Misc.DAC_GAIN    : 8;
+
+        #ifdef ENABLE_FEAT_F4HWN
+            gEeprom.VOLUME_GAIN_BACKUP   = gEeprom.VOLUME_GAIN;
+        #endif
 
         BK4819_WriteRegister(BK4819_REG_3B, 22656 + gEeprom.BK4819_XTAL_FREQ_LOW);
 //      BK4819_WriteRegister(BK4819_REG_3C, gEeprom.BK4819_XTAL_FREQ_HIGH);
@@ -643,7 +657,7 @@ void SETTINGS_SaveSettings(void)
         State[6] = gEeprom.TAIL_TONE_ELIMINATION;
     #endif
 
-    #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
         State[7] = (gEeprom.VFO_OPEN & 0x01) | ((gEeprom.CURRENT_STATE & 0x07) << 1) | ((gEeprom.SCAN_LIST_DEFAULT & 0x07) << 4);
     #else
         State[7] = gEeprom.VFO_OPEN;
@@ -1006,7 +1020,7 @@ State[1] = 0
     EEPROM_WriteBuffer(0x1FF0, State);
 }
 
-#ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+#ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
     void SETTINGS_WriteCurrentState(void)
     {
         uint8_t State[8];

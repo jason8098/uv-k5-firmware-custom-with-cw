@@ -119,7 +119,7 @@ enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
     uint8_t       gSetting_set_pwr = 1;
     bool          gSetting_set_ptt = 0;
     uint8_t       gSetting_set_tot = 0;
-    uint8_t       gSetting_set_ctr = 11;
+    uint8_t       gSetting_set_ctr = 10;
     bool          gSetting_set_inv = false;
     uint8_t       gSetting_set_eot = 0;
     bool          gSetting_set_lck = false;
@@ -130,7 +130,9 @@ enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
     #endif
     bool          gSetting_set_tmr = 0;
     bool          gSetting_set_ptt_session;
-    uint8_t       gDebug;
+    #ifdef ENABLE_FEAT_F4HWN_DEBUG
+        uint8_t       gDebug;
+    #endif
     uint8_t       gDW = 0;
     uint8_t       gCB = 0;
     bool          gSaveRxMode = false;
@@ -308,6 +310,7 @@ uint8_t           gIsLocked = 0xFF;
 #ifdef ENABLE_FEAT_F4HWN
     bool          gK5startup = true;
     bool          gBackLight = false;
+    bool          gMute = false;
     uint8_t       gBacklightTimeOriginal;
     uint8_t       gBacklightBrightnessOld;
     uint8_t       gPttOnePushCounter = 0;

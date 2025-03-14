@@ -117,10 +117,15 @@ enum ACTION_OPT_t {
     ACTION_OPT_PTT,
     ACTION_OPT_WN,
     ACTION_OPT_BACKLIGHT,
+    ACTION_OPT_MUTE,
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
         ACTION_OPT_POWER_HIGH,
         ACTION_OPT_REMOVE_OFFSET,
     #endif
+#endif
+#ifdef ENABLE_REGA
+    ACTION_OPT_REGA_ALARM,
+    ACTION_OPT_REGA_TEST,
 #endif
     ACTION_OPT_LEN
 };
@@ -212,7 +217,7 @@ typedef struct {
     bool                  SCAN_LIST_ENABLED[3];
     uint8_t               SCANLIST_PRIORITY_CH1[3];
     uint8_t               SCANLIST_PRIORITY_CH2[3];
-#ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+#ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
     uint8_t               CURRENT_STATE;
     uint8_t               CURRENT_LIST;
 #endif
@@ -272,6 +277,9 @@ typedef struct {
     bool              NOAA_AUTO_SCAN;
 #endif
     uint8_t               VOLUME_GAIN;
+    #ifdef ENABLE_FEAT_F4HWN
+        uint8_t           VOLUME_GAIN_BACKUP;
+    #endif
     uint8_t               DAC_GAIN;
 
     VFO_Info_t            VfoInfo[2];
@@ -313,7 +321,7 @@ void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, 
 void SETTINGS_SaveBatteryCalibration(const uint16_t * batteryCalibration);
 void SETTINGS_UpdateChannel(uint8_t channel, const VFO_Info_t *pVFO, bool keep, bool check, bool save);
 void SETTINGS_WriteBuildOptions(void);
-#ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+#ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
     void SETTINGS_WriteCurrentState(void);
 #endif
 #ifdef ENABLE_FEAT_F4HWN_VOL

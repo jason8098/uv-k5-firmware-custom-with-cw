@@ -35,6 +35,7 @@
 #include "ui/status.h"
 
 #ifdef ENABLE_FEAT_F4HWN_RX_TX_TIMER
+#ifndef ENABLE_FEAT_F4HWN_DEBUG
 static void convertTime(uint8_t *line, uint8_t type) 
 {
     uint16_t t = (type == 0) ? (gTxTimerCountdown_500ms / 2) : (3600 - gRxTimerCountdown_500ms / 2);
@@ -50,6 +51,7 @@ static void convertTime(uint8_t *line, uint8_t type)
 
     gUpdateStatus = true;
 }
+#endif
 #endif
 
 void UI_DisplayStatus()
@@ -122,28 +124,23 @@ void UI_DisplayStatus()
     }
     x += 10;  // font character width
 
-    // Only for debug
-    // Only for debug
-    // Only for debug
-    
-    bool debug = false;
-    if(debug)
-    {
+    #ifdef ENABLE_FEAT_F4HWN_DEBUG
+        // Only for debug
+        // Only for debug
+        // Only for debug
+
         sprintf(str, "%d", gDebug);
         UI_PrintStringSmallBufferNormal(str, line + x + 1);
         x += 16;
-    }
-    else
-    {
-
-    #ifdef ENABLE_VOICE
+    #else
+        #ifdef ENABLE_VOICE
         // VOICE indicator
         if (gEeprom.VOICE_PROMPT != VOICE_PROMPT_OFF){
             memcpy(line + x, BITMAP_VoicePrompt, sizeof(BITMAP_VoicePrompt));
             x1 = x + sizeof(BITMAP_VoicePrompt);
         }
         x += sizeof(BITMAP_VoicePrompt);
-    #endif
+        #endif
 
         if(!SCANNER_IsScanning()) {
         #ifdef ENABLE_FEAT_F4HWN_RX_TX_TIMER
@@ -185,7 +182,7 @@ void UI_DisplayStatus()
             }
         }
         x += sizeof(gFontDWR) + 3;
-    }
+    #endif
 
 #ifdef ENABLE_VOX
     // VOX indicator
@@ -212,30 +209,47 @@ void UI_DisplayStatus()
 
     x = MAX(x1, 69u);
 
-    // KEY-LOCK indicator
+    const void *src = NULL;   // Pointer to the font/bitmap to copy
+    size_t size = 0;          // Size of the font/bitmap
+
+    // Determine the source and size based on conditions
     if (gEeprom.KEY_LOCK) {
-        memcpy(line + x + 1, gFontKeyLock, sizeof(gFontKeyLock));
+        src = gFontKeyLock;
+        size = sizeof(gFontKeyLock);
     }
     else if (gWasFKeyPressed) {
         #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
-            if(gEeprom.MENU_LOCK == false) {
-                memcpy(line + x + 1, gFontF, sizeof(gFontF));
-            }
+        if (!gEeprom.MENU_LOCK) {
+            src = gFontF;
+            size = sizeof(gFontF);
+        }
         #else
-            memcpy(line + x + 1, gFontF, sizeof(gFontF));
+        src = gFontF;
+        size = sizeof(gFontF);
         #endif
     }
-    else if (gBackLight)
-    {
-        memcpy(line + x + 1, gFontLight, sizeof(gFontLight));
+    #ifdef ENABLE_FEAT_F4HWN
+        else if (gMute) {
+            src = gFontMute;
+            size = sizeof(gFontMute);
+        }
+    #endif
+    else if (gBackLight) {
+        src = gFontLight;
+        size = sizeof(gFontLight);
     }
     #ifdef ENABLE_FEAT_F4HWN_CHARGING_C
-    else if (gChargingWithTypeC)
-    {
-        memcpy(line + x + 1, BITMAP_USB_C, sizeof(BITMAP_USB_C));
+    else if (gChargingWithTypeC) {
+        src = BITMAP_USB_C;
+        size = sizeof(BITMAP_USB_C);
     }
     #endif
-    
+
+    // Perform the memcpy if a source was selected
+    if (src) {
+        memcpy(line + x + 1, src, size);
+    }
+
     // Battery
     unsigned int x2 = LCD_WIDTH - sizeof(BITMAP_BatteryLevel1) - 0;
 

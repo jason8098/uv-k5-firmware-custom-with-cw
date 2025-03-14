@@ -42,6 +42,9 @@
 #include "settings.h"
 #include "ui/inputbox.h"
 #include "ui/ui.h"
+#ifdef ENABLE_REGA
+    #include "app/rega.h"
+#endif
 
 #ifdef ENABLE_FEAT_F4HWN_SCREENSHOT
   #include "screenshot.h"
@@ -111,12 +114,21 @@ void (*action_opt_table[])(void) = {
     [ACTION_OPT_PTT] = &ACTION_Ptt,
     [ACTION_OPT_WN] = &ACTION_Wn,
     [ACTION_OPT_BACKLIGHT] = &ACTION_BackLight,
+    #if !defined(ENABLE_SPECTRUM) || !defined(ENABLE_FMRADIO)
+        [ACTION_OPT_MUTE] = &ACTION_Mute,
+    #else
+        [ACTION_OPT_MUTE] = &FUNCTION_NOP,
+    #endif
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
         [ACTION_OPT_POWER_HIGH] = &ACTION_Power_High,
         [ACTION_OPT_REMOVE_OFFSET] = &ACTION_Remove_Offset,
     #endif
 #else
     [ACTION_OPT_RXMODE] = &FUNCTION_NOP,
+#endif
+#ifdef ENABLE_REGA
+    [ACTION_OPT_REGA_ALARM] = &ACTION_RegaAlarm,
+    [ACTION_OPT_REGA_TEST] = &ACTION_RegaTest,
 #endif
 };
 
@@ -224,7 +236,7 @@ void ACTION_Scan(bool bRestart)
 
         // channel mode. Keep scanning but toggle between scan lists
         gEeprom.SCAN_LIST_DEFAULT = (gEeprom.SCAN_LIST_DEFAULT + 1) % 6;
-        #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
             SETTINGS_WriteCurrentState();
         #endif
 
@@ -233,7 +245,7 @@ void ACTION_Scan(bool bRestart)
         gScanPauseDelayIn_10ms = 1;
         gScheduleScanListen    = false;
     } else {
-        #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
         if(gScanRangeStart == 0) // No ScanRange
         {
             gEeprom.CURRENT_STATE = 1;
@@ -624,6 +636,27 @@ void ACTION_BackLightOnDemand(void)
     
     BACKLIGHT_TurnOn();
 }
+
+    #if !defined(ENABLE_SPECTRUM) || !defined(ENABLE_FMRADIO)
+    void ACTION_Mute(void)
+    {
+        // Toggle mute state
+        gMute = !gMute;
+
+        // Update the registers
+        #ifdef ENABLE_FMRADIO
+            BK1080_WriteRegister(BK1080_REG_05_SYSTEM_CONFIGURATION2, gMute ? 0x0A10 : 0x0A1F);
+        #endif
+        gEeprom.VOLUME_GAIN = gMute ? 0 : gEeprom.VOLUME_GAIN_BACKUP;
+        BK4819_WriteRegister(BK4819_REG_48,
+            (11u << 12)                |  // ??? .. 0 ~ 15, doesn't seem to make any difference
+            (0u << 10)                 |  // AF Rx Gain-1
+            (gEeprom.VOLUME_GAIN << 4) |  // AF Rx Gain-2
+            (gEeprom.DAC_GAIN << 0));     // AF DAC Gain (after Gain-1 and Gain-2)
+
+        gUpdateStatus = true;
+    }
+    #endif
 
     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
     void ACTION_Power_High(void)

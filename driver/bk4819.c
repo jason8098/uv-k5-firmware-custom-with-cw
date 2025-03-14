@@ -620,7 +620,6 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
                 // with weak RX signals the RX bandwidth is reduced
                 val = 0x3428; // Old value 0x45a8 < v3.6
             }
-
             break;
 
         case BK4819_FILTER_BW_NARROW:   // 12.5kHz
@@ -631,7 +630,6 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
                 // with weak RX signals the RX bandwidth is reduced
                 val = 0x3448; // Old value 0x4408 < v3.6
             }
-
             break;
 
         case BK4819_FILTER_BW_NARROWER: // 6.25kHz
@@ -653,7 +651,6 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
                 // with weak RX signals the RX bandwidth is reduced
                 val = 0x4458;
             }
-
             break;
         */
     }

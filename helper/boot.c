@@ -74,6 +74,9 @@ void BOOT_ProcessMode(BOOT_Mode_t Mode)
 {
     if (Mode == BOOT_MODE_F_LOCK)
     {
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+            gEeprom.CURRENT_STATE = 0; // Don't resume is active...
+        #endif 
         GUI_SelectNextDisplay(DISPLAY_MENU);
     }
     #ifdef ENABLE_AIRCOPY
@@ -111,8 +114,8 @@ void BOOT_ProcessMode(BOOT_Mode_t Mode)
             gEeprom.BACKLIGHT_TIME = 61;
             gEeprom.KEY_LOCK = 0;
 
-            #ifdef ENABLE_FEAT_F4HWN
-                gEeprom.CURRENT_STATE = 0; // Don't scan if scan resume is active...
+            #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+                gEeprom.CURRENT_STATE = 0; // Don't resume is active...
             #endif 
 
             GUI_SelectNextDisplay(DISPLAY_AIRCOPY);

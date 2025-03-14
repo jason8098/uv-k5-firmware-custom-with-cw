@@ -209,6 +209,7 @@ uint8_t cmds[] = {
         }
     }
 
+    #if defined(ENABLE_FEAT_F4HWN_CTR) || defined(ENABLE_FEAT_F4HWN_INV)
     void ST7565_ContrastAndInv(void)
     {
         SPI_ToggleMasterMode(&SPI0->CR, false);
@@ -219,11 +220,13 @@ uint8_t cmds[] = {
             ST7565_Cmd(i);
         }
     }
+    #endif
 
     int16_t map(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max) {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
+    #if !defined(ENABLE_SPECTRUM) || !defined(ENABLE_FMRADIO)
     void ST7565_Gauge(uint8_t line, uint8_t min, uint8_t max, uint8_t value)
     {
         gFrameBuffer[line][54] = 0x0c;
@@ -238,6 +241,7 @@ uint8_t cmds[] = {
             gFrameBuffer[line][i] = (i <= filled) ? 0x2d : 0x21;
         }
     }
+    #endif
 #endif
     
 void ST7565_Init(void)

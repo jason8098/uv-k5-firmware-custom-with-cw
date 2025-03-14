@@ -210,29 +210,26 @@ static void SendVersion(void)
     SendReply(&Reply, sizeof(Reply));
 }
 
+#ifndef ENABLE_FEAT_F4HWN
 static bool IsBadChallenge(const uint32_t *pKey, const uint32_t *pIn, const uint32_t *pResponse)
 {
-    #ifdef ENABLE_FEAT_F4HWN
-        UNUSED(pKey);
-        UNUSED(pIn);
-        UNUSED(pResponse);
-    #else
-        unsigned int i;
-        uint32_t     IV[4];
+    unsigned int i;
+    uint32_t     IV[4];
 
-        IV[0] = 0;
-        IV[1] = 0;
-        IV[2] = 0;
-        IV[3] = 0;
+    IV[0] = 0;
+    IV[1] = 0;
+    IV[2] = 0;
+    IV[3] = 0;
 
-        AES_Encrypt(pKey, IV, pIn, IV, true);
+    AES_Encrypt(pKey, IV, pIn, IV, true);
 
-        for (i = 0; i < 4; i++)
-            if (IV[i] != pResponse[i])
-                return true;
-    #endif
+    for (i = 0; i < 4; i++)
+        if (IV[i] != pResponse[i])
+            return true;
+
     return false;
 }
+#endif
 
 // session init, sends back version info and state
 // timestamp is a session id really
@@ -360,6 +357,7 @@ static void CMD_0529(void)
     SendReply(&Reply, sizeof(Reply));
 }
 
+#ifndef ENABLE_FEAT_F4HWN
 static void CMD_052D(const uint8_t *pBuffer)
 {
     const CMD_052D_t *pCmd = (const CMD_052D_t *)pBuffer;
@@ -400,6 +398,7 @@ static void CMD_052D(const uint8_t *pBuffer)
 
     SendReply(&Reply, sizeof(Reply));
 }
+#endif
 
 // session init, sends back version info and state
 // timestamp is a session id really
@@ -600,10 +599,12 @@ void UART_HandleCommand(void)
         case 0x0529:
             CMD_0529();
             break;
-    
-        case 0x052D:
-            CMD_052D(UART_Command.Buffer);
-            break;
+            
+        #ifndef ENABLE_FEAT_F4HWN
+            case 0x052D:
+                CMD_052D(UART_Command.Buffer);
+                break;
+        #endif
     
         case 0x052F:
             CMD_052F(UART_Command.Buffer);

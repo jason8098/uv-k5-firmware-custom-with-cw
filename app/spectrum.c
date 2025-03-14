@@ -867,16 +867,23 @@ uint8_t Rssi2Y(uint16_t rssi)
     return DrawingEndY - Rssi2PX(rssi, 0, DrawingEndY);
 }
 
-#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+#ifdef ENABLE_FEAT_F4HWN
     static void DrawSpectrum()
     {
+        uint16_t steps = GetStepsCount();
+        // max bars at 128 to correctly draw larger numbers of samples
+        uint8_t bars = (steps > 128) ? 128 : steps;
+        // shift to center bar on freq marker
+        uint8_t shift_graph = 64 / steps + 1;
+
         uint8_t ox = 0;
         for (uint8_t i = 0; i < 128; ++i)
         {
             uint16_t rssi = rssiHistory[i >> settings.stepsCount];
             if (rssi != RSSI_MAX_VALUE)
             {
-                uint8_t x = i * 128 / GetStepsCount();
+                // stretch bars to fill the screen width
+                uint8_t x = i * 128 / bars + shift_graph;
                 for (uint8_t xx = ox; xx < x; xx++)
                 {
                     DrawVLine(Rssi2Y(rssi), DrawingEndY, xx, true);
@@ -941,6 +948,7 @@ static void DrawStatus()
 static void ShowChannelName(uint32_t f)
 {
     unsigned int i;
+    char String[12];
     memset(String, 0, sizeof(String));
 
     if (isListening)
@@ -963,10 +971,13 @@ static void ShowChannelName(uint32_t f)
     }
     else
     {
+        /*
         for (int i = 36; i < 100; i++)
         {
             gStatusLine[i] = 0b00000000;
         }
+        */
+        memset(&gStatusLine[36], 0, 100 - 28);
     }
     ST7565_BlitStatusLine();
 }
@@ -1152,6 +1163,10 @@ static void OnKeyDown(uint8_t key)
         }
 #ifdef ENABLE_FEAT_F4HWN_SPECTRUM
         SaveSettings();
+#endif
+#ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+        gEeprom.CURRENT_STATE = 0;
+        SETTINGS_WriteCurrentState();
 #endif
         DeInitSpectrum();
         break;
@@ -1628,11 +1643,22 @@ void APP_RunSpectrum()
             }
         }
         settings.stepsCount = STEPS_128;
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+            gEeprom.CURRENT_STATE = 5;
+        #endif
     }
-    else
+    else {
 #endif
         currentFreq = initialFreq = gTxVfo->pRX->Frequency -
                                     ((GetStepsCount() / 2) * GetScanStep());
+        #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+            gEeprom.CURRENT_STATE = 4;
+        #endif
+    }
+
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+        SETTINGS_WriteCurrentState();
+    #endif
 
     BackupRegisters();
 

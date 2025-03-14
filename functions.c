@@ -255,6 +255,7 @@ void FUNCTION_Select(FUNCTION_Type_t Function)
         UI_DisplayStatus();
     }
 
+    /*
     switch (Function) {
         case FUNCTION_FOREGROUND:
             FUNCTION_Foreground(PreviousFunction);
@@ -277,6 +278,23 @@ void FUNCTION_Select(FUNCTION_Type_t Function)
         case FUNCTION_BAND_SCOPE:
         default:
             break;
+    }
+    */
+
+    if (Function == FUNCTION_FOREGROUND) {
+        FUNCTION_Foreground(PreviousFunction);
+        return;
+    }
+
+    if (Function == FUNCTION_POWER_SAVE) {
+        FUNCTION_PowerSave();
+        return;
+    }
+
+    if (Function == FUNCTION_TRANSMIT) {
+        FUNCTION_Transmit();
+    } else if (Function == FUNCTION_MONITOR) {
+        gMonitor = true;
     }
 
     gBatterySaveCountdown_10ms = battery_save_count_10ms;

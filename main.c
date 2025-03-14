@@ -31,7 +31,8 @@
 
 #ifdef ENABLE_FEAT_F4HWN
     #ifdef ENABLE_FMRADIO
-        #include "app/fm.h"
+        #include "app/action.h"
+        #include "ui/ui.h"
     #endif
     #ifdef ENABLE_SPECTRUM
         #include "app/spectrum.h"
@@ -164,7 +165,7 @@ void Main(void)
             gEeprom.KEY_LOCK = 0;
             SETTINGS_SaveSettings();
             #ifndef ENABLE_VOX
-                gMenuCursor = 65; // move to hidden section, fix me if change... !!! Remove VOX and Mic Bar
+                gMenuCursor = 67; // move to hidden section, fix me if change... !!! Remove VOX and Mic Bar
             #else
                 gMenuCursor = 68; // move to hidden section, fix me if change... !!!
             #endif
@@ -290,35 +291,40 @@ void Main(void)
 #endif
     }
 
-    #ifdef ENABLE_FEAT_F4HWN_RESTORE_SCAN
-    switch (gEeprom.CURRENT_STATE) {
-        case 1:
-            //gScanRangeStart = 0;
-            //ACTION_Scan(false);
-            gEeprom.SCAN_LIST_DEFAULT = gEeprom.CURRENT_LIST;
-            CHFRSCANNER_Start(true, SCAN_FWD);
-            break;
-
-        case 2:
+    /*
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+    if(gEeprom.CURRENT_STATE == 2 || gEeprom.CURRENT_STATE == 5)
+    {
             gScanRangeStart = gScanRangeStart ? 0 : gTxVfo->pRX->Frequency;
             gScanRangeStop = gEeprom.VfoInfo[!gEeprom.TX_VFO].freq_config_RX.Frequency;
             if(gScanRangeStart > gScanRangeStop)
             {
                 SWAP(gScanRangeStart, gScanRangeStop);
             }
-            //ACTION_Scan(false);
+    }
+    switch (gEeprom.CURRENT_STATE) {
+        case 1:
+            gEeprom.SCAN_LIST_DEFAULT = gEeprom.CURRENT_LIST;
+            CHFRSCANNER_Start(true, SCAN_FWD);
+            break;
+
+        case 2:
             CHFRSCANNER_Start(true, SCAN_FWD);
             break;
 
         #ifdef ENABLE_FMRADIO
         case 3:
-            FM_Start(); // For compiler alignments and paddings...
+            ACTION_FM();
+            GUI_SelectNextDisplay(gRequestDisplayScreen);
             break;
         #endif
 
         #ifdef ENABLE_SPECTRUM
         case 4:
-            APP_RunSpectrum(); // For compiler alignments and paddings...
+            APP_RunSpectrum();
+            break;
+        case 5:
+            APP_RunSpectrum();
             break;
         #endif
 
@@ -327,7 +333,37 @@ void Main(void)
             break;
     }
     #endif
+    */
 
+    #ifdef ENABLE_FEAT_F4HWN_RESUME_STATE
+        if (gEeprom.CURRENT_STATE == 2 || gEeprom.CURRENT_STATE == 5) {
+            gScanRangeStart = gScanRangeStart ? 0 : gTxVfo->pRX->Frequency;
+            gScanRangeStop = gEeprom.VfoInfo[!gEeprom.TX_VFO].freq_config_RX.Frequency;
+            if (gScanRangeStart > gScanRangeStop) {
+                SWAP(gScanRangeStart, gScanRangeStop);
+            }
+        }
+
+        if (gEeprom.CURRENT_STATE == 1) {
+            gEeprom.SCAN_LIST_DEFAULT = gEeprom.CURRENT_LIST;
+        }
+
+        if (gEeprom.CURRENT_STATE == 1 || gEeprom.CURRENT_STATE == 2) {
+            CHFRSCANNER_Start(true, SCAN_FWD);
+        }
+        #ifdef ENABLE_FMRADIO
+        else if (gEeprom.CURRENT_STATE == 3) {
+            ACTION_FM();
+            GUI_SelectNextDisplay(gRequestDisplayScreen);
+        }
+        #endif
+        #ifdef ENABLE_SPECTRUM
+        else if (gEeprom.CURRENT_STATE == 4 || gEeprom.CURRENT_STATE == 5) {
+            APP_RunSpectrum();
+        }
+        #endif
+    #endif
+        
     while (true) {
         APP_Update();
 

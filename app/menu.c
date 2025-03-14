@@ -400,17 +400,19 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             //*pMin = 0;
             *pMax = ARRAY_SIZE(gSubMenu_SET_TOT) - 1;
             break;
-#ifdef ENABLE_FEAT_F4HWN_CONTRAST
+#ifdef ENABLE_FEAT_F4HWN_CTR
         case MENU_SET_CTR:
             *pMin = 1;
             *pMax = 15;
             break;
 #endif
         case MENU_TX_LOCK:
+#ifdef ENABLE_FEAT_F4HWN_INV
         case MENU_SET_INV:
             //*pMin = 0;
             *pMax = ARRAY_SIZE(gSubMenu_OFF_ON) - 1;
             break;
+#endif
         case MENU_SET_LCK:
             //*pMin = 0;
             *pMax = ARRAY_SIZE(gSubMenu_SET_LCK) - 1;
@@ -928,7 +930,7 @@ void MENU_AcceptSetting(void)
         case MENU_SET_EOT:
             gSetting_set_eot = gSubMenuSelection;
             break;
-#ifdef ENABLE_FEAT_F4HWN_CONTRAST
+#ifdef ENABLE_FEAT_F4HWN_CTR
         case MENU_SET_CTR:
             gSetting_set_ctr = gSubMenuSelection;
             break;
@@ -1205,15 +1207,9 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_SLIST1:
-            gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, 1);
-            break;
-
         case MENU_SLIST2:
-            gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, 2);
-            break;
-
         case MENU_SLIST3:
-            gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, 3);
+            gSubMenuSelection = RADIO_FindNextChannel(0, 1, true, UI_MENU_GetCurrentMenuId() - MENU_SLIST1 + 1);
             break;
 
         #ifdef ENABLE_ALARM
@@ -1381,7 +1377,7 @@ void MENU_ShowCurrentSetting(void)
         case MENU_SET_EOT:
             gSubMenuSelection = gSetting_set_eot;
             break;
-#ifdef ENABLE_FEAT_F4HWN_CONTRAST
+#ifdef ENABLE_FEAT_F4HWN_CTR
         case MENU_SET_CTR:
             gSubMenuSelection = gSetting_set_ctr;
             break;
@@ -1567,6 +1563,7 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
     Offset = (Max >= 100) ? 3 : (Max >= 10) ? 2 : 1;
 
+    /*
     switch (gInputBoxIndex)
     {
         case 1:
@@ -1578,6 +1575,11 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         case 3:
             Value = (gInputBox[0] * 100) + (gInputBox[1] * 10) + gInputBox[2];
             break;
+    }
+    */
+
+    for (uint8_t i = 0; i < gInputBoxIndex; i++) {
+        Value = (Value * 10) + gInputBox[i];
     }
 
     if (Offset == gInputBoxIndex)
@@ -1937,8 +1939,8 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
             VFO = 2;
             break;
         case MENU_SLIST1:
-            VFO = 1;
             bCheckScanList = true;
+            VFO = 1;
             break;
 
         default:

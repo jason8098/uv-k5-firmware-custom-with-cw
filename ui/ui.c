@@ -30,6 +30,9 @@
 #ifdef ENABLE_FMRADIO
     #include "ui/fmradio.h"
 #endif
+#ifdef ENABLE_REGA
+    #include "app/rega.h"
+#endif
 #include "ui/inputbox.h"
 #include "ui/main.h"
 #include "ui/menu.h"
@@ -56,6 +59,10 @@ void (*UI_DisplayFunctions[])(void) = {
 
 #ifdef ENABLE_AIRCOPY
     [DISPLAY_AIRCOPY] = &UI_DisplayAircopy,
+#endif
+
+#ifdef ENABLE_REGA
+    [DISPLAY_REGA] = &UI_DisplayREGA,
 #endif
 };
 

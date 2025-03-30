@@ -19,3 +19,12 @@ Locate to "app/main.c"
 Edit the string at the following line (190).
 
     const char *message = "CQ CQ DS4WOF/FOXHUNT"; //main message. edit this 
+
+## Step 4
+Compile the firmware by typing the following in the terminal:
+
+    ./compile-with-docker.sh custom
+
+
+## Step 5 
+When the compilation is done, you will see a folder "compiled-firmware" generated in the Explorer section. Simply open that up and right click on any of the .bin file then Download.

@@ -37,6 +37,7 @@
 #include "app/main.h"
 #include "app/menu.h"
 #include "app/scanner.h"
+#include "app/morse.h"
 #ifdef ENABLE_UART
     #include "app/uart.h"
 #endif
@@ -86,6 +87,7 @@ void (*ProcessKeysFunctions[])(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) 
     [DISPLAY_MAIN] = &MAIN_ProcessKeys,
     [DISPLAY_MENU] = &MENU_ProcessKeys,
     [DISPLAY_SCANNER] = &SCANNER_ProcessKeys,
+    [DISPLAY_MORSE] = &MORSE_ProcessKeys,
 
 #ifdef ENABLE_FMRADIO
     [DISPLAY_FM] = &FM_ProcessKeys,

@@ -186,6 +186,7 @@ endif
 OBJS += ui/main.o
 OBJS += ui/menu.o
 OBJS += ui/scanner.o
+OBJS += ui/morse.o
 OBJS += ui/status.o
 OBJS += ui/ui.o
 OBJS += ui/welcome.o

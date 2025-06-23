@@ -4,23 +4,41 @@
 
 #include "driver/system.h"
 
+#include <stdbool.h>
+#include <string.h>
+#include "driver/st7565.h"
+#include "external/printf/printf.h"
+
+#include "misc.h"
+#include "ui/helper.h"
+#include "ui/ui.h"
+#include "ui/inputbox.h"
+
+
+#include "app/generic.h"
+
 // Function to play Morse code tones
 void PlayMorseTone(const char *morse) {
     while (*morse) {
         if (*morse == '.') {
             BK4819_TransmitTone(false, 600); // Short tone for dot
-            SYSTEM_DelayMs(90);
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
+            SYSTEM_DelayMs(100);
             BK4819_EnterTxMute();
         } else if (*morse == '-') {
-            BK4819_TransmitTone(false, 600); // Long tone for dash
-            SYSTEM_DelayMs(250);
+            BK4819_TransmitTone(false, 600); 
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
+            SYSTEM_DelayMs(340);
             BK4819_EnterTxMute();
         } else if (*morse == ' ') {
-            SYSTEM_DelayMs(10); // Space between characters
+            SYSTEM_DelayMs(840); // Space between characters
+            
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         } else if (*morse == '/') {
-            SYSTEM_DelayMs(10); // Space between words
+            SYSTEM_DelayMs(20); // Space between words
         }
-        SYSTEM_DelayMs(10); // Intra-character spacing
+        SYSTEM_DelayMs(45); // Intra-character spacing
+        BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         morse++;
     }
 }
@@ -74,17 +92,88 @@ const char* MorseCode(char c) {
 // Function to transmit Morse code from a text string
 void TransmitMorse(const char *text) {
 
-        SYSTEM_DelayMs(200); // Gap between letters
+        SYSTEM_DelayMs(380); // Gap between letters
         char buffer[10]; // Temporary buffer for Morse characters
         
-        BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
         while (*text) {
             const char *morse = MorseCode(*text);
             strcpy(buffer, morse);
             PlayMorseTone(buffer);
-            SYSTEM_DelayMs(200); // Gap between letters
+            SYSTEM_DelayMs(380); // Gap between letters
             text++;
         }
         
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
+        
 }
+
+
+static void MORSE_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+    if (!bKeyHeld && bKeyPressed &&  Key)
+    {
+
+        return;
+    }
+}
+static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld)
+{
+    if (!bKeyHeld && bKeyPressed)
+    {
+    return;
+
+    }
+}
+static void MORSE_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
+{
+    if (!bKeyHeld && bKeyPressed) { // short pressed
+       gRequestDisplayScreen    = DISPLAY_MAIN;
+    return;
+    }
+}
+static void MORSE_Key_UP_DOWN(bool bKeyPressed, bool pKeyHeld, int8_t Direction)
+{
+    if (!pKeyHeld && bKeyPressed &&  Direction){
+
+    }
+    return;
+}
+
+static void MORSE_Key_STAR(bool bKeyPressed, bool bKeyHeld)
+{
+    if (!bKeyHeld && bKeyPressed) {
+    }
+    return;
+}
+
+void MORSE_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
+{
+    switch (Key) {
+        case KEY_0...KEY_9:
+            MORSE_Key_DIGITS(Key, bKeyPressed, bKeyHeld);
+            break;
+        case KEY_MENU:
+            MORSE_Key_MENU(bKeyPressed, bKeyHeld);
+            break;
+        case KEY_UP:
+            MORSE_Key_UP_DOWN(bKeyPressed, bKeyHeld,  1);
+            break;
+        case KEY_DOWN:
+            MORSE_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
+            break;
+        case KEY_EXIT:
+            MORSE_Key_EXIT(bKeyPressed, bKeyHeld);
+            break;
+        case KEY_STAR:
+            MORSE_Key_STAR(bKeyPressed, bKeyHeld);
+            break;
+        case KEY_PTT:
+            GENERIC_Key_PTT(bKeyPressed);
+            break;
+        default:
+            if (!bKeyHeld && bKeyPressed)
+            break;
+    }
+}
+
+

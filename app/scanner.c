@@ -526,3 +526,4 @@ bool SCANNER_IsScanning(void)
 {
     return gCssBackgroundScan || (gScreenToDisplay == DISPLAY_SCANNER);
 }
+

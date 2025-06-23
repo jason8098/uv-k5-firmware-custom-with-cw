@@ -37,6 +37,7 @@
 #include "ui/main.h"
 #include "ui/menu.h"
 #include "ui/scanner.h"
+#include "ui/morse.h"
 #include "ui/ui.h"
 #include "../misc.h"
 
@@ -52,6 +53,7 @@ void (*UI_DisplayFunctions[])(void) = {
     [DISPLAY_MAIN] = &UI_DisplayMain,
     [DISPLAY_MENU] = &UI_DisplayMenu,
     [DISPLAY_SCANNER] = &UI_DisplayScanner,
+    [DISPLAY_MORSE] = &UI_DisplayMORSE,
 
 #ifdef ENABLE_FMRADIO
     [DISPLAY_FM] = &UI_DisplayFM,

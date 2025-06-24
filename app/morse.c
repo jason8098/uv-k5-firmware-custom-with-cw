@@ -25,7 +25,7 @@ char* cwid_m = "VVV"; //Edit this Message
 void PlayMorseTone(const char *morse) {
     while (*morse) {
         if (*morse == '.') {
-            BK4819_TransmitTone(false, 600); /
+            BK4819_TransmitTone(false, 600); 
             BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
             SYSTEM_DelayMs(80);
             BK4819_EnterTxMute();

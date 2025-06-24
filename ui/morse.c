@@ -19,7 +19,9 @@ void UI_DisplayMORSE(void)
 
     UI_DisplayClear();
     UI_PrintString("FOX TX v0.1", 0, 0, 0, 8);
-    UI_PrintStringSmallBold("CWID: DE 4S7RS", 0, 0, 2);
+    snprintf_(String, sizeof(String), "CWID: %u", cwid_m);
+    pPrintStr = String;
+    UI_PrintStringSmallBold(String, 0, 0, 2);
 
     if(txstatus==1){
         

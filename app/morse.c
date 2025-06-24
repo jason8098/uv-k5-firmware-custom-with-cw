@@ -19,6 +19,7 @@
 
 #include "app/generic.h"
 int txstatus =0;
+char *cwid_m = "DE 4S7RS"; //Edit this Message
 
 void PlayMorseTone(const char *morse) {
     while (*morse) {
@@ -130,7 +131,7 @@ static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld)
         RADIO_SetTxParameters();
         while(1){
 
-            TransmitMorse("DE 4S7RS");
+            TransmitMorse(cwid_m);
             
             BK4819_Disable();
             SYSTEM_DelayMs(45000); // Gap between letters

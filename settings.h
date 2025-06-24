@@ -212,6 +212,7 @@ typedef struct {
     uint8_t               CROSS_BAND_RX_TX;
     uint8_t               BATTERY_SAVE;
     uint8_t               BACKLIGHT_TIME;
+    uint8_t               MORSE_TIME;
     uint8_t               SCAN_RESUME_MODE;
     uint8_t               SCAN_LIST_DEFAULT;
     bool                  SCAN_LIST_ENABLED[3];

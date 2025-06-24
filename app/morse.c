@@ -15,16 +15,17 @@
 #include "ui/ui.h"
 #include "ui/inputbox.h"
 #include "ui/morse.h"
-
-
 #include "app/generic.h"
+#include "settings.h"
+#include <pthread.h>
+
 int txstatus =0;
-char *cwid_m = "DE 4S7RS"; //Edit this Message
+char* cwid_m = "VVV"; //Edit this Message
 
 void PlayMorseTone(const char *morse) {
     while (*morse) {
         if (*morse == '.') {
-            BK4819_TransmitTone(false, 600); // Short tone for dot
+            BK4819_TransmitTone(false, 600); /
             BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
             SYSTEM_DelayMs(80);
             BK4819_EnterTxMute();
@@ -34,13 +35,13 @@ void PlayMorseTone(const char *morse) {
             SYSTEM_DelayMs(290);
             BK4819_EnterTxMute();
         } else if (*morse == ' ') {
-            SYSTEM_DelayMs(790); // Space between characters
+            SYSTEM_DelayMs(790); 
             
             BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         } else if (*morse == '/') {
-            SYSTEM_DelayMs(20); // Space between words
+            SYSTEM_DelayMs(20);
         }
-        SYSTEM_DelayMs(50); // Intra-character spacing
+        SYSTEM_DelayMs(50); 
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         morse++;
     }
@@ -105,8 +106,9 @@ void TransmitMorse(const char *text) {
         BK4819_EnterTxMute();
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         SYSTEM_DelayMs(280); 
-        while (*text) {
         txstatus=1;
+        UI_DisplayMORSE();
+        while (*text) {
             const char *morse = MorseCode(*text);
             strcpy(buffer, morse);
             PlayMorseTone(buffer);
@@ -126,7 +128,7 @@ static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld)
 {
     if (!bKeyHeld && bKeyPressed)
     {
-        txstatus=1;
+        
         UI_DisplayMORSE();
         RADIO_SetTxParameters();
         while(1){
@@ -134,7 +136,8 @@ static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld)
             TransmitMorse(cwid_m);
             
             BK4819_Disable();
-            SYSTEM_DelayMs(45000); // Gap between letters
+            SYSTEM_DelayMs(45000); // Gap 
+
         }
     return;
 
@@ -148,7 +151,25 @@ static void MORSE_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
         BK4819_Disable();
     }
 }
+static void MORSE_Key_UP_DOWN(bool bKeyPressed, bool pKeyHeld, int8_t Direction)
+{
+    if (!pKeyHeld && bKeyPressed && Direction==1) {
+        gTxVfo->OUTPUT_POWER++;
+    } else if(!pKeyHeld && bKeyPressed && Direction==-1){
+        gTxVfo->OUTPUT_POWER--;
+    }
 
+    if(gTxVfo->OUTPUT_POWER==8){
+        
+        gTxVfo->OUTPUT_POWER=1;
+    }
+    else if(gTxVfo->OUTPUT_POWER==0){
+        
+        gTxVfo->OUTPUT_POWER=7;
+    }
+    UI_DisplayMORSE();
+    SYSTEM_DelayMs(10);
+}
 void MORSE_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 {
     switch (Key) {
@@ -157,6 +178,12 @@ void MORSE_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             break;
         case KEY_EXIT:
             MORSE_Key_EXIT(bKeyPressed, bKeyHeld);
+            break;
+        case KEY_UP:
+            MORSE_Key_UP_DOWN(bKeyPressed, bKeyHeld,  1);
+            break;
+        case KEY_DOWN:
+            MORSE_Key_UP_DOWN(bKeyPressed, bKeyHeld, -1);
             break;
         default:
             if (!bKeyHeld && bKeyPressed)

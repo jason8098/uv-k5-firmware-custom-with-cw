@@ -75,6 +75,7 @@
 #include "ui/menu.h"
 #include "ui/status.h"
 #include "ui/ui.h"
+#include "ui/morse.h"
 
 static bool flagSaveVfo;
 static bool flagSaveSettings;

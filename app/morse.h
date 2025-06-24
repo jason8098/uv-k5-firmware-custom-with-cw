@@ -8,7 +8,9 @@
 // Function Prototypes
 void PlayMorseTone(const char *morse);
 const char* MorseCode(char c);
+extern int txstatus;
 void TransmitMorse(const char *text);
 void GUI_ShowMorseScreen(void);
 void MORSE_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
+extern volatile bool gMorseAbortRequested;
 #endif // MORSE_CODE_H

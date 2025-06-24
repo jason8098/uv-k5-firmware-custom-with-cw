@@ -183,14 +183,7 @@ static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
             break;
 
         case KEY_5:
-             //APP_RunSpectrum(); //disabled due to morse function
-                //GUI_DisplayScreen();
-               // RADIO_SetTxParameters();
-             //   const char *message = "DE 4S7RS"; //m
-                gRequestDisplayScreen = DISPLAY_MORSE;
-              //  BK4819_Disable();
-              //  SYSTEM_DelayMs(10000); //transmit interval in ms. default is 60s (60000)
-          //   }
+            gRequestDisplayScreen = DISPLAY_MORSE;
             break;
 
         case KEY_6:

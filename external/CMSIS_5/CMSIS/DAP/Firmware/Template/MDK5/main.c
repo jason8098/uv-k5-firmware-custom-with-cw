@@ -44,7 +44,7 @@ __NO_RETURN void app_main (void *argument) {
 
   LED_CONNECTED_OUT(1U);                // Turn on  Debugger Connected LED
   LED_RUNNING_OUT(1U);                  // Turn on  Target Running LED
-  Delayms(500U);                        // Wait for 500ms
+  Delayms(500U);                        //  for 500ms
   LED_RUNNING_OUT(0U);                  // Turn off Target Running LED
   LED_CONNECTED_OUT(0U);                // Turn off Debugger Connected LED
 

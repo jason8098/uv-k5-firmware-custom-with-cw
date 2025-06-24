@@ -17,7 +17,10 @@
 #include "ARMCM0.h"
 #include "systick.h"
 #include "../misc.h"
+#include "app/morse.h"
+#include "app/app.h"
 
+#include "system.h"
 // 0x20000324
 static uint32_t gTickMultiplier;
 
@@ -47,3 +50,4 @@ void SYSTICK_DelayUs(uint32_t Delay)
         Previous = Current;
     } while (elapsed_ticks < ticks);
 }
+

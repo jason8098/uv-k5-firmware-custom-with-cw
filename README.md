@@ -13,12 +13,12 @@ When you activate using F+5 Key combination, It will tx the hard-coded string. A
 Open up a codespace for this repo.
 
 ## Step 2
-Locate to "app/main.c"
+Locate to "app/morse.c"
 
 ## Step 3
-Edit the string at the following line (190).
+Edit the string at the following line (23).
 
-    const char *message = "CQ CQ DS4WOF/FOXHUNT"; //main message. edit this 
+    char* cwid_m = "VVV"; //Edit this Message
 
 ## Step 4
 Compile the firmware by typing the following in the terminal:

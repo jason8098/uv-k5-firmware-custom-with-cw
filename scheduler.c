@@ -66,7 +66,11 @@ void SystickHandler(void)
         DECREMENT_AND_TRIGGER(gTxTimerCountdown_500ms, gTxTimeoutReached);
         DECREMENT(gSerialConfigCountDown_500ms);
     }
-
+    if (gCustomCountdown_10ms > 0) {
+        if (--gCustomCountdown_10ms == 0) {
+            gCustomTimeoutReached = true;
+        }
+    }
     if ((gGlobalSysTickCounter & 3) == 0)
         gNextTimeslice40ms = true;
 

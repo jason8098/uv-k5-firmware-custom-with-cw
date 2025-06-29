@@ -183,6 +183,9 @@ volatile bool     gNextTimeslice_500ms;
 volatile uint16_t gTxTimerCountdown_500ms;
 volatile bool     gTxTimeoutReached;
 
+volatile uint16_t gCustomCountdown_10ms     = 0;
+volatile bool    gCustomTimeoutReached = false;
+
 #ifdef ENABLE_FEAT_F4HWN
     volatile uint16_t gTxTimerCountdownAlert_500ms;
     volatile bool     gTxTimeoutReachedAlert;

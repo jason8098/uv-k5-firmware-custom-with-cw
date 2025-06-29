@@ -76,7 +76,7 @@ void SETTINGS_InitEEPROM(void)
     gEeprom.BATTERY_SAVE          = (Data[3] < 6) ? Data[3] : 4;
     gEeprom.DUAL_WATCH            = (Data[4] < 3) ? Data[4] : DUAL_WATCH_CHAN_A;
     gEeprom.BACKLIGHT_TIME        = (Data[5] < 62) ? Data[5] : 12;
-    gEeprom.MORSE_TIME            = (Data[8] < 60) ? Data[8] : 10;
+    
     #ifdef ENABLE_FEAT_F4HWN_NARROWER
         gEeprom.TAIL_TONE_ELIMINATION = Data[6] & 0x01;
         gSetting_set_nfm = (Data[6] >> 1) & 0x01;

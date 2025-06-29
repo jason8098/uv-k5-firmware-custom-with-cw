@@ -17,7 +17,6 @@
 #include "ui/morse.h"
 #include "app/generic.h"
 #include "settings.h"
-#include <pthread.h>
 
 int txstatus =0;
 bool txen = false;

@@ -21,7 +21,7 @@
 int txstatus =0;
 bool txen = false;
 int isHalted = 0;
-char* cwid_m = "DE 4S7RS"; //Edit this Message
+char* cwid_m = "DE DS4WOF"; //Edit this Message
 
 void morseDelay(uint16_t tms){
         gCustomCountdown_10ms     = tms/10;   

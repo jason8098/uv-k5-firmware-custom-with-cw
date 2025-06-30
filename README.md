@@ -16,9 +16,9 @@ Open up a codespace for this repo.
 Locate to "app/morse.c"
 
 ## Step 3
-Edit the string at the following line (23).
+Edit the string at the following line (24).
 
-    char* cwid_m = "VVV"; //Edit this Message
+    char* cwid_m = "DE DS4WOF"; //Edit this Message
 
 ## Step 4
 Compile the firmware by typing the following in the terminal:

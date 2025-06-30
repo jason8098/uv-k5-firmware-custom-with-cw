@@ -18,7 +18,7 @@ Locate to "app/morse.c"
 ## Step 3
 Edit the string at the following line (24).
 
-    char* cwid_m = "DE DS4WOF"; //Edit this Message
+    char* cwid_m = "DE N0CALL"; //Edit this Message
 
 ## Step 4
 Compile the firmware by typing the following in the terminal:

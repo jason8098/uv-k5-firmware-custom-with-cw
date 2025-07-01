@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include "app/morse.h"
-#include "dcs.h"
 #include "driver/st7565.h"
 #include "external/printf/printf.h"
 #include "misc.h"
@@ -41,7 +40,7 @@ void UI_DisplayMORSE(void)
     }
     uint32_t frequency = gTxVfo->pTX->Frequency;
     uint32_t mhz = frequency / 100000;
-    uint32_t khz = (frequency % 100000) / 10;
+    uint32_t khz = (frequency % 100000);
 
     snprintf_(String, sizeof(String), "FREQ: %u.%uMHz", mhz, khz);
     pPrintStr = String;

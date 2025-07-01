@@ -17,6 +17,7 @@
 #include "ui/morse.h"
 #include "app/generic.h"
 #include "settings.h"
+#include "driver/uart.h"
 
 int txstatus =0;
 bool txen = false;
@@ -158,9 +159,13 @@ static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
 }
 static void MORSE_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 {
+    isHalted++;
     if (!bKeyHeld && bKeyPressed) {
-        isHalted++;
-        if(txstatus == 0 && isHalted>2){
+        if(!txen && isHalted==1){
+            gRequestDisplayScreen = DISPLAY_MAIN;
+            isHalted=0;
+        }
+        else if(!txen && txstatus == 0 && isHalted>2){
             gRequestDisplayScreen = DISPLAY_MAIN;
             isHalted=0;
         }

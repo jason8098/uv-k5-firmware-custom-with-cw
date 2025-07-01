@@ -16,7 +16,7 @@ Open up a codespace for this repo.
 Locate to "app/morse.c"
 
 ## Step 3
-Edit the string at the following line (24).
+Edit the string at the following line (25).
 
     char* cwid_m = "DE N0CALL"; //Edit this Message
 

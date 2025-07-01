@@ -19,7 +19,7 @@ void UI_DisplayMORSE(void)
     char *pPrintStr = String;
 
     UI_DisplayClear();
-    UI_PrintStringSmallBold("FOX TX v1.0", 0, 0, 0);
+    UI_PrintStringSmallBold("FOX TX v1.0.1", 0, 0, 0);
     snprintf_(String, sizeof(String), "CW: %s", cwid_m);
     pPrintStr = String;
     UI_PrintStringSmallBold(String, 0, 0, 1);

@@ -8,7 +8,7 @@ I made this mainly for the FOX HUNT beacon purposes. The modulation is FM, so mo
 # Photos & Videos
 ![Morse screen](https://raw.githubusercontent.com/jason8098/uv-k5-firmware-custom-with-cw/refs/heads/main/images/morse_menu.jpeg)
 
-[![Demo video - uploaded by 4S7JL](https://raw.githubusercontent.com/f4hwn/f4hwn-firmware/main/app/images/cw-beacon-video.png)](https://youtube.com/shorts/rFiTzwoiCbk?si=5fcepVO4zzER_N6f)
+[![Demo video - uploaded by 4S7JL](https://youtube.com/shorts/rFiTzwoiCbk?si=5fcepVO4zzER_N6f)
 
 # How it Works?
 - App is opened using F+5 Key combination.

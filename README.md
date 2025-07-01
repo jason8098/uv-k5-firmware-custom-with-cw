@@ -5,6 +5,11 @@ PS: Bandscope was replcaed to this due to the capacity issue.
 # Use Case
 I made this mainly for the FOX HUNT beacon purposes. The modulation is FM, so most of all receivers, handhelds can receive it without any problem. 
 
+# Photos & Videos
+![Morse screen](https://raw.githubusercontent.com/jason8098/uv-k5-firmware-custom-with-cw/refs/heads/main/images/morse_menu.jpeg)
+
+[![Demo video - uploaded by 4S7JL](https://raw.githubusercontent.com/f4hwn/f4hwn-firmware/main/app/images/cw-beacon-video.png)](https://youtube.com/shorts/rFiTzwoiCbk?si=5fcepVO4zzER_N6f)
+
 # How it Works?
 - App is opened using F+5 Key combination.
 - Power levels can be adjusted using the up down arrow keys.

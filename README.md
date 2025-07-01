@@ -6,7 +6,7 @@ PS: Bandscope was replcaed to this due to the capacity issue.
 I made this mainly for the FOX HUNT beacon purposes. The modulation is FM, so most of all receivers, handhelds can receive it without any problem. 
 
 # Photos & Videos
-![Morse screen](https://raw.githubusercontent.com/jason8098/uv-k5-firmware-custom-with-cw/refs/heads/main/images/morse_menu.jpeg)
+<img src="https://raw.githubusercontent.com/jason8098/uv-k5-firmware-custom-with-cw/refs/heads/main/images/morse_menu.jpeg" alt="morse screen" width="200"/>
 
 [![Demo video - uploaded by 4S7JL](https://youtube.com/shorts/rFiTzwoiCbk?si=5fcepVO4zzER_N6f)
 

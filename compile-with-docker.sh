@@ -14,8 +14,8 @@ custom() {
     echo "Custom compilation..."
     docker run --rm -v "${PWD}/compiled-firmware/:/app/compiled-firmware" $IMAGE_NAME /bin/bash -c "rm ./compiled-firmware/*; cd /app && make -s \
         EDITION_STRING=Custom \
-        TARGET=f4hwn.custom \
-        && cp f4hwn.custom* compiled-firmware/"
+        TARGET=k5cw-beacon.custom \
+        && cp k5cw-beacon.custom* compiled-firmware/"
 }
 
 standard() {

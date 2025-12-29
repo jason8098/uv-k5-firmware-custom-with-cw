@@ -19,7 +19,10 @@ void UI_DisplayMORSE(void)
     char *pPrintStr = String;
 
     UI_DisplayClear();
-    UI_PrintStringSmallBold("FOX TX v1.0.1", 0, 0, 0);
+
+    snprintf_(String, sizeof(String), "FOX TX v%s", morseVersion);
+    pPrintStr = String;
+    UI_PrintStringSmallBold(pPrintStr, 0, 0, 0);
     snprintf_(String, sizeof(String), "CW: %s", cwid_m);
     pPrintStr = String;
     UI_PrintStringSmallBold(String, 0, 0, 1);
@@ -48,25 +51,26 @@ void UI_DisplayMORSE(void)
     
 
     char* pw;
-    if(gTxVfo->OUTPUT_POWER==1){
+    int power=gTxVfo->OUTPUT_POWER;
+    if(power==1){
         pw="20mW";
     }
-    else if(gTxVfo->OUTPUT_POWER==2){
+    else if(power==2){
         pw="125mW";
     }
-    else if(gTxVfo->OUTPUT_POWER==3){
+    else if(power==3){
         pw="250mW";
     }
-    else if(gTxVfo->OUTPUT_POWER==4){
+    else if(power==4){
         pw="500mW";
     }
-    else if(gTxVfo->OUTPUT_POWER==5){
+    else if(power==5){
         pw="1W";
     }
-    else if(gTxVfo->OUTPUT_POWER==6){
+    else if(power==6){
         pw="2W";
     }
-    else if(gTxVfo->OUTPUT_POWER==7){
+    else if(power==7){
         pw="5W";
     }
     snprintf_(String, sizeof(String), "PW: %s", pw);

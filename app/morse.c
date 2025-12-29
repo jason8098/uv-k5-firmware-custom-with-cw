@@ -24,6 +24,8 @@ bool txen = false;
 int isHalted = 0;
 char* cwid_m = "DE N0CALL"; //Edit this Message
 
+char* morseVersion = "1.0.1";
+
 void morseDelay(uint16_t tms){
         gCustomCountdown_10ms     = tms/10;   
         gCustomTimeoutReached = false;

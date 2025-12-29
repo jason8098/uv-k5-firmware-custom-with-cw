@@ -16,5 +16,5 @@ void GUI_ShowMorseScreen(void);
 // Global Variables
 extern int txstatus;
 extern char* cwid_m;
-extern char* morseVersion = '1.0.1';
+extern char* morseVersion;
 #endif // MORSE_CODE_H1

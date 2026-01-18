@@ -798,22 +798,25 @@ void MENU_AcceptSetting(void)
             break;
 
         case MENU_CWID:
-            for (int i = MORSE_CWID_MAX_LEN - 1; i >= 0; i--) {
+            {
+            const int cwid_max = (int)MORSE_CWID_MAX_LEN;
+            for (int i = cwid_max - 1; i >= 0; i--) {
                 if (edit[i] != ' ' && edit[i] != '_' && edit[i] != 0x00 && edit[i] != 0xff)
                     break;
                 edit[i] = ' ';
             }
-            for (int i = 0; i < MORSE_CWID_MAX_LEN; i++) {
+            for (int i = 0; i < cwid_max; i++) {
                 if (edit[i] == '_')
                     edit[i] = ' ';
                 cwid_m[i] = edit[i];
             }
             cwid_m[MORSE_CWID_MAX_LEN] = 0;
-            for (int i = MORSE_CWID_MAX_LEN - 1; i >= 0 && cwid_m[i] == ' '; i--)
+            for (int i = cwid_max - 1; i >= 0 && cwid_m[i] == ' '; i--)
                 cwid_m[i] = 0;
             if (cwid_m[0] == 0) {
                 strncpy(cwid_m, MORSE_CWID_DEFAULT, MORSE_CWID_MAX_LEN);
                 cwid_m[MORSE_CWID_MAX_LEN] = 0;
+            }
             }
             break;
 
@@ -1787,13 +1790,15 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
 
     if (menu_id == MENU_CWID)
     {
+        const int cwid_max = (int)MORSE_CWID_MAX_LEN;
+
         if (edit_index < 0)
         {   // enter CWID edit mode
             strncpy(edit, cwid_m, MORSE_CWID_MAX_LEN);
             edit[MORSE_CWID_MAX_LEN] = 0;
 
             edit_index = strlen(edit);
-            while (edit_index < MORSE_CWID_MAX_LEN)
+            while (edit_index < cwid_max)
                 edit[edit_index++] = '_';
             edit[edit_index] = 0;
             edit_index = 0;
@@ -1802,9 +1807,9 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
             return;
         }
         else
-        if (edit_index >= 0 && edit_index < MORSE_CWID_MAX_LEN)
+        if (edit_index >= 0 && edit_index < cwid_max)
         {   // editing CWID characters
-            if (++edit_index < MORSE_CWID_MAX_LEN)
+            if (++edit_index < cwid_max)
                 return;
 
             // exit

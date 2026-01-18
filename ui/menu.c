@@ -1009,7 +1009,7 @@ void UI_DisplayMenu(void)
             else
             {
                 UI_PrintString(edit, menu_item_x1, menu_item_x2, 2, 8);
-                if (edit_index < MORSE_CWID_MAX_LEN)
+                if (edit_index < (int)MORSE_CWID_MAX_LEN)
                     UI_PrintString("^", menu_item_x1 - 1 + (8 * edit_index), 0, 4, 8);
             }
             already_printed = true;

@@ -26,7 +26,7 @@ bool txen = false;
 int isHalted = 0;
 char cwid_m[MORSE_CWID_MAX_LEN + 1] = MORSE_CWID_DEFAULT;
 
-char* morseVersion = "1.0.1";
+char* morseVersion = "1.1.0";
 uint8_t morse_wpm = MORSE_WPM_DEFAULT;
 uint16_t morse_stop_interval_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
 

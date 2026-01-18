@@ -3,7 +3,17 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 #include "driver/keyboard.h"
+
+#define MORSE_CWID_MAX_LEN 10u
+#define MORSE_CWID_DEFAULT "DE N0CALL"
+#define MORSE_WPM_DEFAULT 15u
+#define MORSE_WPM_MIN 5u
+#define MORSE_WPM_MAX 30u
+#define MORSE_STOP_INTERVAL_DEFAULT_MS 45000u
+#define MORSE_STOP_INTERVAL_MIN_MS 1000u
+#define MORSE_STOP_INTERVAL_MAX_MS 60000u
 
 // Function Prototypes
 void Morse_Init(void);
@@ -15,6 +25,8 @@ void GUI_ShowMorseScreen(void);
 
 // Global Variables
 extern int txstatus;
-extern char* cwid_m;
+extern char cwid_m[MORSE_CWID_MAX_LEN + 1];
 extern char* morseVersion;
+extern uint8_t morse_wpm;
+extern uint16_t morse_stop_interval_ms;
 #endif // MORSE_CODE_H1

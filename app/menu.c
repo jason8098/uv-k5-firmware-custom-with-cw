@@ -20,6 +20,7 @@
     #include "ARMCM0.h"
 #endif
 #include "app/dtmf.h"
+#include "app/morse.h"
 #include "app/generic.h"
 #include "app/menu.h"
 #include "app/scanner.h"
@@ -282,6 +283,16 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             //*pMin = 0;
             *pMin = 5;
             *pMax = 179;
+            break;
+
+        case MENU_CW_WPM:
+            *pMin = MORSE_WPM_MIN;
+            *pMax = MORSE_WPM_MAX;
+            break;
+
+        case MENU_CW_INT:
+            *pMin = MORSE_STOP_INTERVAL_MIN_MS / 1000u;
+            *pMax = MORSE_STOP_INTERVAL_MAX_MS / 1000u;
             break;
 
         #ifdef ENABLE_VOX
@@ -786,6 +797,34 @@ void MENU_AcceptSetting(void)
             gEeprom.POWER_ON_DISPLAY_MODE = gSubMenuSelection;
             break;
 
+        case MENU_CWID:
+            for (int i = MORSE_CWID_MAX_LEN - 1; i >= 0; i--) {
+                if (edit[i] != ' ' && edit[i] != '_' && edit[i] != 0x00 && edit[i] != 0xff)
+                    break;
+                edit[i] = ' ';
+            }
+            for (int i = 0; i < MORSE_CWID_MAX_LEN; i++) {
+                if (edit[i] == '_')
+                    edit[i] = ' ';
+                cwid_m[i] = edit[i];
+            }
+            cwid_m[MORSE_CWID_MAX_LEN] = 0;
+            for (int i = MORSE_CWID_MAX_LEN - 1; i >= 0 && cwid_m[i] == ' '; i--)
+                cwid_m[i] = 0;
+            if (cwid_m[0] == 0) {
+                strncpy(cwid_m, MORSE_CWID_DEFAULT, MORSE_CWID_MAX_LEN);
+                cwid_m[MORSE_CWID_MAX_LEN] = 0;
+            }
+            break;
+
+        case MENU_CW_WPM:
+            morse_wpm = (uint8_t)gSubMenuSelection;
+            break;
+
+        case MENU_CW_INT:
+            morse_stop_interval_ms = (uint16_t)gSubMenuSelection * 1000u;
+            break;
+
         case MENU_ROGER:
             gEeprom.ROGER = gSubMenuSelection;
             break;
@@ -1260,6 +1299,16 @@ void MENU_ShowCurrentSetting(void)
             gSubMenuSelection = gEeprom.POWER_ON_DISPLAY_MODE;
             break;
 
+        case MENU_CW_WPM:
+            gSubMenuSelection = morse_wpm;
+            break;
+
+        case MENU_CW_INT:
+            gSubMenuSelection = morse_stop_interval_ms / 1000u;
+            if (gSubMenuSelection == 0)
+                gSubMenuSelection = MORSE_STOP_INTERVAL_MIN_MS / 1000u;
+            break;
+
         case MENU_ROGER:
             gSubMenuSelection = gEeprom.ROGER;
             break;
@@ -1428,25 +1477,28 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
     int32_t  Min;
     int32_t  Max;
     uint16_t Value = 0;
+    const uint8_t menu_id = UI_MENU_GetCurrentMenuId();
 
     if (bKeyHeld || !bKeyPressed)
         return;
 
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 
-    if (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME && edit_index >= 0)
+    if ((menu_id == MENU_MEM_NAME || menu_id == MENU_CWID) && edit_index >= 0)
     {   // currently editing the channel name
 
-        if (edit_index < 10)
+        const uint8_t max_len = (menu_id == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+
+        if (edit_index < max_len)
         {
             if (Key <= KEY_9)
             {
                 edit[edit_index] = '0' + Key - KEY_0;
 
-                if (++edit_index >= 10)
+                if (++edit_index >= max_len)
                 {   // exit edit
                     gFlagAcceptSetting  = false;
-                    gAskForConfirmation = 1;
+                    gAskForConfirmation = (menu_id == MENU_MEM_NAME) ? 1 : 0;
                 }
 
                 gRequestDisplayScreen = DISPLAY_MENU;
@@ -1522,10 +1574,10 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
         return;
     }
 
-    if (UI_MENU_GetCurrentMenuId() == MENU_MEM_CH ||
-        UI_MENU_GetCurrentMenuId() == MENU_DEL_CH ||
-        UI_MENU_GetCurrentMenuId() == MENU_1_CALL ||
-        UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME)
+    if (menu_id == MENU_MEM_CH ||
+        menu_id == MENU_DEL_CH ||
+        menu_id == MENU_1_CALL ||
+        menu_id == MENU_MEM_NAME)
     {   // enter 3-digit channel number
 
         if (gInputBoxIndex < 3)
@@ -1656,6 +1708,8 @@ static void MENU_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 
 static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
 {
+    const uint8_t menu_id = UI_MENU_GetCurrentMenuId();
+
     if (bKeyHeld || !bKeyPressed)
         return;
 
@@ -1665,18 +1719,18 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
     if (!gIsInSubMenu)
     {
         #ifdef ENABLE_VOICE
-            if (UI_MENU_GetCurrentMenuId() != MENU_SCR)
+            if (menu_id != MENU_SCR)
                 gAnotherVoiceID = MenuList[gMenuCursor].voice_id;
         #endif
-        if (UI_MENU_GetCurrentMenuId() == MENU_UPCODE 
-            || UI_MENU_GetCurrentMenuId() == MENU_DWCODE 
+        if (menu_id == MENU_UPCODE 
+            || menu_id == MENU_DWCODE 
 #ifdef ENABLE_DTMF_CALLING 
-            || UI_MENU_GetCurrentMenuId() == MENU_ANI_ID
+            || menu_id == MENU_ANI_ID
 #endif
             )
             return;
         #if 1
-            if (UI_MENU_GetCurrentMenuId() == MENU_DEL_CH || UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME)
+            if (menu_id == MENU_DEL_CH || menu_id == MENU_MEM_NAME)
                 if (!RADIO_CheckValidChannel(gSubMenuSelection, false, 0))
                     return;  // invalid channel
         #endif
@@ -1693,7 +1747,7 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
         return;
     }
 
-    if (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME)
+    if (menu_id == MENU_MEM_NAME)
     {
         if (edit_index < 0)
         {   // enter channel name edit mode
@@ -1720,6 +1774,38 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
 
             if (++edit_index < 10)
                 return; // next char
+
+            // exit
+            gFlagAcceptSetting  = false;
+            gAskForConfirmation = 0;
+            if (memcmp(edit_original, edit, sizeof(edit_original)) == 0) {
+                // no change - drop it
+                gIsInSubMenu = false;
+            }
+        }
+    }
+
+    if (menu_id == MENU_CWID)
+    {
+        if (edit_index < 0)
+        {   // enter CWID edit mode
+            strncpy(edit, cwid_m, MORSE_CWID_MAX_LEN);
+            edit[MORSE_CWID_MAX_LEN] = 0;
+
+            edit_index = strlen(edit);
+            while (edit_index < MORSE_CWID_MAX_LEN)
+                edit[edit_index++] = '_';
+            edit[edit_index] = 0;
+            edit_index = 0;
+
+            memcpy(edit_original, edit, sizeof(edit_original));
+            return;
+        }
+        else
+        if (edit_index >= 0 && edit_index < MORSE_CWID_MAX_LEN)
+        {   // editing CWID characters
+            if (++edit_index < MORSE_CWID_MAX_LEN)
+                return;
 
             // exit
             gFlagAcceptSetting  = false;
@@ -1798,17 +1884,19 @@ static void MENU_Key_STAR(const bool bKeyPressed, const bool bKeyHeld)
 
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 
-    if (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME && edit_index >= 0)
+    if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID) && edit_index >= 0)
     {   // currently editing the channel name
 
-        if (edit_index < 10)
+        const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+
+        if (edit_index < max_len)
         {
             edit[edit_index] = '-';
 
-            if (++edit_index >= 10)
+            if (++edit_index >= max_len)
             {   // exit edit
                 gFlagAcceptSetting  = false;
-                gAskForConfirmation = 1;
+                gAskForConfirmation = (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME) ? 1 : 0;
             }
 
             gRequestDisplayScreen = DISPLAY_MENU;
@@ -1846,9 +1934,11 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
     uint8_t Channel;
     bool    bCheckScanList;
 
-    if (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME && gIsInSubMenu && edit_index >= 0)
+    if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID) && gIsInSubMenu && edit_index >= 0)
     {   // change the character
-        if (bKeyPressed && edit_index < 10 && Direction != 0)
+        const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+
+        if (bKeyPressed && edit_index < max_len && Direction != 0)
         {
             const char   unwanted[] = "$%&!\"':;?^`|{}";
             char         c          = edit[edit_index] + Direction;
@@ -1988,18 +2078,19 @@ void MENU_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             MENU_Key_STAR(bKeyPressed, bKeyHeld);
             break;
         case KEY_F:
-            if (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME && edit_index >= 0)
+            if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID) && edit_index >= 0)
             {   // currently editing the channel name
                 if (!bKeyHeld && bKeyPressed)
                 {
                     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-                    if (edit_index < 10)
+                    const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+                    if (edit_index < max_len)
                     {
                         edit[edit_index] = ' ';
-                        if (++edit_index >= 10)
+                        if (++edit_index >= max_len)
                         {   // exit edit
                             gFlagAcceptSetting  = false;
-                            gAskForConfirmation = 1;
+                            gAskForConfirmation = (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME) ? 1 : 0;
                         }
                         gRequestDisplayScreen = DISPLAY_MENU;
                     }

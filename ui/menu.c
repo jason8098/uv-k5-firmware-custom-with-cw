@@ -19,6 +19,7 @@
 
 #include "../app/dtmf.h"
 #include "../app/menu.h"
+#include "../app/morse.h"
 #include "../bitmaps.h"
 #include "../board.h"
 #include "../dcs.h"
@@ -89,6 +90,9 @@ const t_menu_item MenuList[] =
     {"MicBar",      MENU_MIC_BAR       },
     {"ChDisp",      MENU_MDF           }, // was "MDF"
     {"POnMsg",      MENU_PONMSG        },
+    {"CWID",        MENU_CWID          },
+    {"CW WPM",      MENU_CW_WPM        },
+    {"CWInt",       MENU_CW_INT        },
     {"BLTime",      MENU_ABR           }, // was "ABR"
     {"BLMin",       MENU_ABR_MIN       },
     {"BLMax",       MENU_ABR_MAX       },
@@ -991,6 +995,33 @@ void UI_DisplayMenu(void)
 
         case MENU_PONMSG:
             strcpy(String, gSubMenu_PONMSG[gSubMenuSelection]);
+            break;
+
+        case MENU_CWID:
+        {
+            if (!gIsInSubMenu)
+                edit_index = -1;
+            if (edit_index < 0)
+            {
+                const char *pPrintStr = cwid_m[0] ? cwid_m : "--";
+                UI_PrintString(pPrintStr, menu_item_x1, menu_item_x2, 2, 8);
+            }
+            else
+            {
+                UI_PrintString(edit, menu_item_x1, menu_item_x2, 2, 8);
+                if (edit_index < MORSE_CWID_MAX_LEN)
+                    UI_PrintString("^", menu_item_x1 - 1 + (8 * edit_index), 0, 4, 8);
+            }
+            already_printed = true;
+            break;
+        }
+
+        case MENU_CW_WPM:
+            sprintf(String, "%u WPM", gSubMenuSelection);
+            break;
+
+        case MENU_CW_INT:
+            sprintf(String, "%us", gSubMenuSelection);
             break;
 
         case MENU_ROGER:

@@ -99,6 +99,9 @@ enum
 #endif
     MENU_D_LIVE_DEC,
     MENU_PONMSG,
+    MENU_CWID,
+    MENU_CW_WPM,
+    MENU_CW_INT,
     MENU_ROGER,
     MENU_VOL,
     MENU_BAT_TXT,

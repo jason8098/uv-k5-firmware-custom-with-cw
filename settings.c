@@ -17,6 +17,7 @@
 #include <string.h>
 
 #include "app/dtmf.h"
+#include "app/morse.h"
 #ifdef ENABLE_FMRADIO
     #include "app/fm.h"
 #endif
@@ -26,6 +27,11 @@
 #include "misc.h"
 #include "settings.h"
 #include "ui/menu.h"
+
+#define EEPROM_ADDR_MORSE 0x1FE0
+#define EEPROM_MORSE_SIZE 16u
+#define EEPROM_MORSE_WPM_OFFSET 10u
+#define EEPROM_MORSE_STOP_MS_OFFSET 11u
 
 #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
 static const uint32_t gDefaultFrequencyTable[] =
@@ -37,6 +43,81 @@ static const uint32_t gDefaultFrequencyTable[] =
     43350000     //
 };
 #endif
+
+static void SETTINGS_LoadMorse(void)
+{
+    uint8_t data[EEPROM_MORSE_SIZE];
+    size_t len = 0;
+
+    EEPROM_ReadBuffer(EEPROM_ADDR_MORSE, data, sizeof(data));
+
+    for (size_t i = 0; i < MORSE_CWID_MAX_LEN; i++) {
+        const uint8_t c = data[i];
+        if (c == 0xFF || c == 0x00)
+            break;
+        if (c < 32 || c > 126) {
+            len = 0;
+            break;
+        }
+        cwid_m[i] = (char)c;
+        len++;
+    }
+
+    if (len == 0) {
+        strncpy(cwid_m, MORSE_CWID_DEFAULT, MORSE_CWID_MAX_LEN);
+        cwid_m[MORSE_CWID_MAX_LEN] = 0;
+    } else {
+        cwid_m[len] = 0;
+        while (len > 0 && cwid_m[len - 1] == ' ')
+            cwid_m[--len] = 0;
+    }
+
+    if (data[EEPROM_MORSE_WPM_OFFSET] < MORSE_WPM_MIN ||
+        data[EEPROM_MORSE_WPM_OFFSET] > MORSE_WPM_MAX) {
+        morse_wpm = MORSE_WPM_DEFAULT;
+    } else {
+        morse_wpm = data[EEPROM_MORSE_WPM_OFFSET];
+    }
+
+    {
+        const uint16_t stop_ms =
+            (uint16_t)data[EEPROM_MORSE_STOP_MS_OFFSET] |
+            ((uint16_t)data[EEPROM_MORSE_STOP_MS_OFFSET + 1] << 8);
+        if (stop_ms < MORSE_STOP_INTERVAL_MIN_MS || stop_ms > MORSE_STOP_INTERVAL_MAX_MS)
+            morse_stop_interval_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
+        else
+            morse_stop_interval_ms = stop_ms;
+    }
+}
+
+static void SETTINGS_SaveMorse(void)
+{
+    uint8_t data[EEPROM_MORSE_SIZE];
+    size_t len;
+    uint8_t wpm = morse_wpm;
+    uint16_t stop_ms = morse_stop_interval_ms;
+
+    if (wpm < MORSE_WPM_MIN || wpm > MORSE_WPM_MAX)
+        wpm = MORSE_WPM_DEFAULT;
+    if (stop_ms < MORSE_STOP_INTERVAL_MIN_MS || stop_ms > MORSE_STOP_INTERVAL_MAX_MS)
+        stop_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
+
+    memset(data, 0xFF, sizeof(data));
+    len = strlen(cwid_m);
+    if (len > MORSE_CWID_MAX_LEN)
+        len = MORSE_CWID_MAX_LEN;
+    memcpy(data, cwid_m, len);
+
+    data[EEPROM_MORSE_WPM_OFFSET] = wpm;
+    data[EEPROM_MORSE_STOP_MS_OFFSET] = (uint8_t)(stop_ms & 0xFFu);
+    data[EEPROM_MORSE_STOP_MS_OFFSET + 1] = (uint8_t)((stop_ms >> 8) & 0xFFu);
+
+    EEPROM_WriteBuffer(EEPROM_ADDR_MORSE, data);
+    EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 8u, data + 8u);
+
+    morse_wpm = wpm;
+    morse_stop_interval_ms = stop_ms;
+}
 
 EEPROM_Config_t gEeprom = { 0 };
 
@@ -327,6 +408,8 @@ void SETTINGS_InitEEPROM(void)
         gMR_ChannelExclude[i] = false;
     }
 
+    SETTINGS_LoadMorse();
+
         // 0F30..0F3F
         EEPROM_ReadBuffer(0x0F30, gCustomAesKey, sizeof(gCustomAesKey));
         bHasCustomAesKey = false;
@@ -341,7 +424,7 @@ void SETTINGS_InitEEPROM(void)
             }
         #endif
 
-    #ifdef ENABLE_FEAT_F4HWN
+#ifdef ENABLE_FEAT_F4HWN
         // 1FF0..0x1FF7
         EEPROM_ReadBuffer(0x1FF0, Data, 8);
         gSetting_set_pwr = (((Data[7] & 0xF0) >> 4) < 7) ? ((Data[7] & 0xF0) >> 4) : 0;
@@ -539,9 +622,11 @@ void SETTINGS_FactoryReset(bool bIsAll)
             }
         #endif
 
-        #ifdef ENABLE_FEAT_F4HWN
+#ifdef ENABLE_FEAT_F4HWN
             EEPROM_WriteBuffer(0x1FF0, Template);
-        #endif
+#endif
+        EEPROM_WriteBuffer(EEPROM_ADDR_MORSE, Template);
+        EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 8u, Template);
     }
 }
 
@@ -822,6 +907,8 @@ void SETTINGS_SaveSettings(void)
 
     EEPROM_WriteBuffer(0x1FF0, State);
 #endif
+
+    SETTINGS_SaveMorse();
 
 #ifdef ENABLE_FEAT_F4HWN_VOL
     SETTINGS_WriteCurrentVol();

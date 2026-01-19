@@ -34,23 +34,29 @@ void UI_DisplayMORSE(void)
     UI_PrintStringSmallBold(String, 0, 0, 2);
 
     {
-        uint16_t seconds_left = 0;
+        uint16_t tenths_left = 0;
         if (txstatus == 2 || txstatus == 3)
-            seconds_left = (gCustomCountdown_10ms + 99u) / 100u;
+            tenths_left = (gCustomCountdown_10ms + 9u) / 10u;
 
         if(txstatus==1){
             UI_PrintStringSmallBold("STATUS: TX CWID", 0, 0, 3);
         }else if(txstatus==2){
-            if (seconds_left > 0)
-                snprintf_(String, sizeof(String), "STATUS: TONE %us", seconds_left);
-            else
-                snprintf_(String, sizeof(String), "STATUS: TONE");
+            if (tenths_left > 0) {
+                const uint16_t seconds = tenths_left / 10u;
+                const uint16_t tenths = tenths_left % 10u;
+                snprintf_(String, sizeof(String), "STATUS: TONE %u.%us", seconds, tenths);
+            } else {
+                snprintf_(String, sizeof(String), "STATUS: TONE 0.0s");
+            }
             UI_PrintStringSmallBold(String, 0, 0, 3);
         }else if(txstatus==3){
-            if (seconds_left > 0)
-                snprintf_(String, sizeof(String), "STATUS: WAIT %us", seconds_left);
-            else
-                snprintf_(String, sizeof(String), "STATUS: WAIT");
+            if (tenths_left > 0) {
+                const uint16_t seconds = tenths_left / 10u;
+                const uint16_t tenths = tenths_left % 10u;
+                snprintf_(String, sizeof(String), "STATUS: WAIT %u.%us", seconds, tenths);
+            } else {
+                snprintf_(String, sizeof(String), "STATUS: WAIT 0.0s");
+            }
             UI_PrintStringSmallBold(String, 0, 0, 3);
         }
         else{

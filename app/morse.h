@@ -21,6 +21,10 @@
 #define MORSE_BEEP_INTERVAL_MIN_MS 0u
 #define MORSE_BEEP_INTERVAL_MAX_MS 30000u
 #define MORSE_BEEP_INTERVAL_STEP_MS 100u
+#define MORSE_TONE_HZ_DEFAULT 600u
+#define MORSE_TONE_HZ_MIN 300u
+#define MORSE_TONE_HZ_MAX 1200u
+#define MORSE_TONE_HZ_STEP 10u
 
 // Function Prototypes
 void Morse_Init(void);
@@ -38,4 +42,5 @@ extern uint8_t morse_wpm;
 extern uint8_t morse_wpm_effective;
 extern uint16_t morse_stop_interval_ms;
 extern uint16_t morse_beep_ms;
+extern uint16_t morse_tone_hz;
 #endif // MORSE_CODE_H1

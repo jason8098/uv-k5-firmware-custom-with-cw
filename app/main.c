@@ -415,17 +415,21 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 #ifdef ENABLE_VOICE
             gAnotherVoiceID = (VOICE_ID_t)Key;
 #endif
-            uint8_t totalDigits = 6; // by default frequency is lower than 1 GHz
+            const uint8_t digitsBefore = (gTxVfo->pRX->Frequency >= _1GHz_in_KHz) ? 4 : 3;
+            uint8_t totalDigits = digitsBefore + 3; // default 3 decimal digits
             if (gTxVfo->pRX->Frequency >= _1GHz_in_KHz) {
-                totalDigits = 7; // if frequency is uppen than GHz
+                totalDigits = digitsBefore + 3; // if frequency is uppen than GHz
             }
+            uint8_t maxDigits = digitsBefore + 5;
+            if (maxDigits > sizeof(gInputBox))
+                maxDigits = sizeof(gInputBox);
 
             if (gInputBoxIndex == 0) {
                 // do nothing
                 return;
             }
 
-            if (gInputBoxIndex > totalDigits) {
+            if (gInputBoxIndex > maxDigits) {
                 gInputBox[--gInputBoxIndex] = 10;
                 return;
             }
@@ -434,19 +438,20 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
             const char *inputStr = INPUTBOX_GetAscii();
             uint8_t inputLength = gInputBoxIndex;
+            uint8_t decimalsInput = (inputLength > digitsBefore) ? (inputLength - digitsBefore) : 0;
+            uint8_t decimalsTarget = (decimalsInput < 3) ? 3 : decimalsInput;
+            if (decimalsTarget > 5)
+                decimalsTarget = 5;
 
             // convert to int
-            uint32_t inputFreq = StrToUL(inputStr);
+            uint64_t inputFreq = StrToUL(inputStr);
+            for (uint8_t i = decimalsInput; i < decimalsTarget; i++)
+                inputFreq *= 10u;
+            for (uint8_t i = 0; i < (5u - decimalsTarget); i++)
+                inputFreq *= 10u;
 
-            // how many zero to add
-            uint8_t zerosToAdd = totalDigits - inputLength;
-
-            // add missing zero
-            for (uint8_t i = 0; i < zerosToAdd; i++) {
-                inputFreq *= 10;
-            }
-
-            uint32_t Frequency = inputFreq * 100;
+            uint32_t Frequency = (inputFreq > 0xFFFFFFFFu) ? 0xFFFFFFFFu : (uint32_t)inputFreq;
+            const bool extra_digits = inputLength > totalDigits;
 
             // clamp the frequency entered to some valid value
             if (Frequency < frequencyBandTable[0].lower) {
@@ -472,6 +477,8 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 RADIO_ConfigureChannel(Vfo, VFO_CONFIGURE_RELOAD);
             }
 
+            const bool confirm_on_extra = extra_digits && ((Frequency % gTxVfo->StepFrequency) == 0);
+
             Frequency = FREQUENCY_RoundToStep(Frequency, gTxVfo->StepFrequency);
 
             if (Frequency >= BX4819_band1.upper && Frequency < BX4819_band2.lower)
@@ -481,6 +488,11 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             }
 
             gTxVfo->freq_config_RX.Frequency = Frequency;
+            if (confirm_on_extra) {
+                gInputBoxIndex = 0;
+                gKeyInputCountdown = 0;
+                gUpdateDisplay = true;
+            }
 
             gRequestSaveChannel = 1;
             return;

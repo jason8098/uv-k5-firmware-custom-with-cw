@@ -234,8 +234,17 @@ const char* MorseCode(char c) {
 // Function to transmit Morse code from a text string
 void TransmitMorse(const char *text) {
         const uint16_t gap_unit_ms = MORSE_GetGapUnitMs();
-        const uint16_t letter_gap_ms = (uint16_t)(gap_unit_ms * 3u);
-        const uint16_t word_gap_ms = (uint16_t)(gap_unit_ms * 7u);
+        const uint16_t dot_ms = MORSE_GetDotMs();
+        uint32_t letter_gap_ms = (uint32_t)gap_unit_ms * 3u;
+        uint32_t word_gap_ms = (uint32_t)gap_unit_ms * 7u;
+
+        if (letter_gap_ms >= dot_ms)
+            letter_gap_ms -= dot_ms;
+        if (word_gap_ms >= dot_ms)
+            word_gap_ms -= dot_ms;
+
+        const uint16_t letter_gap_ms_u16 = (uint16_t)letter_gap_ms;
+        const uint16_t word_gap_ms_u16 = (uint16_t)word_gap_ms;
         
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
         BK4819_TransmitTone(false, morse_tone_hz);
@@ -249,7 +258,7 @@ void TransmitMorse(const char *text) {
             UI_DisplayMORSE();
             return;
         }
-        morseDelay(letter_gap_ms);
+        morseDelay(letter_gap_ms_u16);
         if (txstatus == 0) {
             UI_DisplayMORSE();
             return;
@@ -261,7 +270,7 @@ void TransmitMorse(const char *text) {
                 break;
 
             if (*text == ' ') {
-                morseDelay(word_gap_ms);
+                morseDelay(word_gap_ms_u16);
                 text++;
                 continue;
             }
@@ -274,7 +283,7 @@ void TransmitMorse(const char *text) {
             }
 
             if (text[1] != '\0' && text[1] != ' ')
-                morseDelay(letter_gap_ms);
+                morseDelay(letter_gap_ms_u16);
             text++;
         }
         

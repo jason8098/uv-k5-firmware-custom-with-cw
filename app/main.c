@@ -424,6 +424,11 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 // do nothing
                 return;
             }
+
+            if (gInputBoxIndex > totalDigits) {
+                gInputBox[--gInputBoxIndex] = 10;
+                return;
+            }
             
             gKeyInputCountdown = (gInputBoxIndex == totalDigits) ? (key_input_timeout_500ms / 16) : (key_input_timeout_500ms / 3);
 

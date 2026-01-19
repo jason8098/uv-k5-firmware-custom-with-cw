@@ -23,7 +23,6 @@
 
 int txstatus =0;
 bool txen = false;
-int isHalted = 0;
 char cwid_m[MORSE_CWID_MAX_LEN + 1] = MORSE_CWID_DEFAULT;
 
 char* morseVersion = "1.1.0";
@@ -108,7 +107,6 @@ void morseDelay(uint16_t tms){
             if (KEYBOARD_Poll() == KEY_EXIT) {
                 txstatus=0;
                 txen=false;
-                isHalted=1;
                 UI_DisplayMORSE();
                 return;
             }
@@ -305,15 +303,9 @@ static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
 }
 static void MORSE_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
 {
-    isHalted++;
     if (!bKeyHeld && bKeyPressed) {
-        if(!txen && isHalted==1){
+        if (!txen) {
             gRequestDisplayScreen = DISPLAY_MAIN;
-            isHalted=0;
-        }
-        else if(!txen && txstatus == 0 && isHalted>2){
-            gRequestDisplayScreen = DISPLAY_MAIN;
-            isHalted=0;
         }
     }
 }

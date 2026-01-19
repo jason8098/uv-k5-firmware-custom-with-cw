@@ -101,6 +101,7 @@ enum
     MENU_PONMSG,
     MENU_CWID,
     MENU_CW_WPM,
+    MENU_CW_EFF,
     MENU_CW_INT,
     MENU_ROGER,
     MENU_VOL,

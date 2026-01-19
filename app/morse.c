@@ -28,26 +28,54 @@ char cwid_m[MORSE_CWID_MAX_LEN + 1] = MORSE_CWID_DEFAULT;
 
 char* morseVersion = "1.1.0";
 uint8_t morse_wpm = MORSE_WPM_DEFAULT;
+uint8_t morse_wpm_effective = MORSE_EFF_WPM_DEFAULT;
 uint16_t morse_stop_interval_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
 
-#define MORSE_DOT_BASE_MS         80u
-#define MORSE_DASH_BASE_MS        290u
-#define MORSE_ELEMENT_GAP_BASE_MS 50u
-#define MORSE_LETTER_GAP_BASE_MS  280u
-#define MORSE_WORD_GAP_BASE_MS    790u
+#define MORSE_PARIS_WORD_UNITS    50u
+#define MORSE_PARIS_ELEMENT_UNITS 31u
+#define MORSE_PARIS_GAP_UNITS     19u
 
 static uint16_t MORSE_GetDotMs(void)
 {
-    if (morse_wpm == 0)
-        return MORSE_DOT_BASE_MS;
+    uint8_t wpm = morse_wpm;
 
-    return (uint16_t)(1200u / morse_wpm);
+    if (wpm < MORSE_WPM_MIN || wpm > MORSE_WPM_MAX)
+        wpm = MORSE_WPM_DEFAULT;
+    if (wpm == 0)
+        wpm = MORSE_WPM_DEFAULT;
+
+    return (uint16_t)(1200u / wpm);
 }
 
-static uint16_t MORSE_ScaleMs(uint16_t base_ms)
+static uint16_t MORSE_GetGapUnitMs(void)
 {
-    const uint32_t dot_ms = MORSE_GetDotMs();
-    return (uint16_t)((dot_ms * base_ms + (MORSE_DOT_BASE_MS / 2u)) / MORSE_DOT_BASE_MS);
+    const uint16_t dot_ms = MORSE_GetDotMs();
+    uint8_t char_wpm = morse_wpm;
+    uint8_t eff_wpm = morse_wpm_effective;
+
+    if (char_wpm < MORSE_WPM_MIN || char_wpm > MORSE_WPM_MAX)
+        char_wpm = MORSE_WPM_DEFAULT;
+    if (eff_wpm < MORSE_EFF_WPM_MIN || eff_wpm > MORSE_EFF_WPM_MAX)
+        eff_wpm = MORSE_EFF_WPM_DEFAULT;
+    if (eff_wpm >= char_wpm || eff_wpm == 0)
+        return dot_ms;
+
+    {
+        const uint32_t total_word_ms = ((1200u * MORSE_PARIS_WORD_UNITS) + (eff_wpm / 2u)) / eff_wpm;
+        const uint32_t element_ms = (uint32_t)dot_ms * MORSE_PARIS_ELEMENT_UNITS;
+        if (total_word_ms <= element_ms)
+            return dot_ms;
+
+        {
+            const uint32_t gap_total_ms = total_word_ms - element_ms;
+            uint32_t gap_unit_ms = (gap_total_ms + (MORSE_PARIS_GAP_UNITS / 2u)) / MORSE_PARIS_GAP_UNITS;
+            if (gap_unit_ms < dot_ms)
+                gap_unit_ms = dot_ms;
+            if (gap_unit_ms > 0xFFFFu)
+                gap_unit_ms = 0xFFFFu;
+            return (uint16_t)gap_unit_ms;
+        }
+    }
 }
 
 void morseDelay(uint16_t tms){
@@ -58,6 +86,8 @@ void morseDelay(uint16_t tms){
                 txstatus=0;
                 txen=false;
                 isHalted=1;
+                UI_DisplayMORSE();
+                return;
             }
             if(txstatus==0){
                 return;
@@ -93,33 +123,35 @@ static void MORSE_StopTx(void)
 
 void PlayMorseTone(const char *morse) {
     const uint16_t dot_ms = MORSE_GetDotMs();
-    const uint16_t dash_ms = MORSE_ScaleMs(MORSE_DASH_BASE_MS);
-    const uint16_t element_gap_ms = MORSE_ScaleMs(MORSE_ELEMENT_GAP_BASE_MS);
-    const uint16_t word_gap_ms = MORSE_ScaleMs(MORSE_WORD_GAP_BASE_MS);
+    const uint16_t dash_ms = (uint16_t)(dot_ms * 3u);
+    const uint16_t element_gap_ms = dot_ms;
 
     while (*morse) {
-        if(txstatus !=0){
-            if (*morse == '.') {
-                BK4819_TransmitTone(false, 600); 
-                BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
-                morseDelay(dot_ms);
-                BK4819_EnterTxMute();
-            } else if (*morse == '-') {
-                BK4819_TransmitTone(false, 600); 
-                BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
-                morseDelay(dash_ms);
-                BK4819_EnterTxMute();
-            } else if (*morse == ' ' || *morse == '/') {
-                morseDelay(word_gap_ms); 
-                
-                BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
-            }
-            morseDelay(element_gap_ms); 
-            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
+        if (txstatus == 0)
+            break;
+
+        if (*morse == '.') {
+            BK4819_TransmitTone(false, 600);
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
+            morseDelay(dot_ms);
+            BK4819_EnterTxMute();
+        } else if (*morse == '-') {
+            BK4819_TransmitTone(false, 600);
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
+            morseDelay(dash_ms);
+            BK4819_EnterTxMute();
+        } else {
             morse++;
-        }else{
-             break;
+            continue;
         }
+
+        BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
+        if (txstatus == 0)
+            break;
+
+        morse++;
+        if (*morse)
+            morseDelay(element_gap_ms);
     }
        
 }
@@ -163,7 +195,6 @@ const char* MorseCode(char c) {
         case '8': return "---..";
         case '9': return "----.";
         case '0': return "-----";
-        case ' ': return "/";   // Space between words
         case '/': return "-..-."; // Slash (/)
         case '-': return "-....-"; // Dash (-)
         default: return ""; // Ignore unknown characters
@@ -172,8 +203,9 @@ const char* MorseCode(char c) {
 
 // Function to transmit Morse code from a text string
 void TransmitMorse(const char *text) {
-        char buffer[10]; // Temporary buffer for Morse characters
-        const uint16_t letter_gap_ms = MORSE_ScaleMs(MORSE_LETTER_GAP_BASE_MS);
+        const uint16_t gap_unit_ms = MORSE_GetGapUnitMs();
+        const uint16_t letter_gap_ms = (uint16_t)(gap_unit_ms * 3u);
+        const uint16_t word_gap_ms = (uint16_t)(gap_unit_ms * 7u);
         
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
         BK4819_TransmitTone(false, 600); 
@@ -183,19 +215,42 @@ void TransmitMorse(const char *text) {
         morseDelay(7500); 
         BK4819_EnterTxMute();
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
-        morseDelay(letter_gap_ms); 
+        if (txstatus == 0) {
+            UI_DisplayMORSE();
+            return;
+        }
+        morseDelay(letter_gap_ms);
+        if (txstatus == 0) {
+            UI_DisplayMORSE();
+            return;
+        }
         txstatus=1;
         UI_DisplayMORSE();
         while (*text) {
+            if (txstatus == 0)
+                break;
+
+            if (*text == ' ') {
+                morseDelay(word_gap_ms);
+                text++;
+                continue;
+            }
+
             const char *morse = MorseCode(*text);
-            strcpy(buffer, morse);
-            PlayMorseTone(buffer);
-            morseDelay(letter_gap_ms); // Gap between letters
+            if (morse[0] != '\0') {
+                PlayMorseTone(morse);
+                if (txstatus == 0)
+                    break;
+            }
+
+            if (text[1] != '\0' && text[1] != ' ')
+                morseDelay(letter_gap_ms);
             text++;
         }
         
-       txstatus =3;
-       
+        if (txstatus != 0)
+            txstatus =3;
+
         UI_DisplayMORSE();
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         

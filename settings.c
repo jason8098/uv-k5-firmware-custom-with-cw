@@ -94,7 +94,7 @@ static void SETTINGS_LoadMorse(void)
         const uint16_t beep_ms =
             (uint16_t)data[EEPROM_MORSE_BEEP_MS_OFFSET] |
             ((uint16_t)data[EEPROM_MORSE_BEEP_MS_OFFSET + 1] << 8);
-        if (beep_ms < MORSE_BEEP_INTERVAL_MIN_MS || beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
+        if (beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
             morse_beep_ms = MORSE_BEEP_INTERVAL_DEFAULT_MS;
         else
             morse_beep_ms = beep_ms;
@@ -126,7 +126,7 @@ static void SETTINGS_SaveMorse(void)
         eff_wpm = MORSE_EFF_WPM_DEFAULT;
     if (eff_wpm > wpm)
         eff_wpm = wpm;
-    if (beep_ms < MORSE_BEEP_INTERVAL_MIN_MS || beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
+    if (beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
         beep_ms = MORSE_BEEP_INTERVAL_DEFAULT_MS;
     if (stop_ms < MORSE_STOP_INTERVAL_MIN_MS || stop_ms > MORSE_STOP_INTERVAL_MAX_MS)
         stop_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;

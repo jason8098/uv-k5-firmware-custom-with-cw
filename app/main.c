@@ -45,6 +45,15 @@
 #include "driver/system.h"
 
 
+static uint8_t MAIN_GetStepDecimals(uint16_t step)
+{
+    if ((step % 100u) == 0)
+        return 3;
+    if ((step % 10u) == 0)
+        return 4;
+    return 5;
+}
+
 static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 {
     uint8_t Vfo = gEeprom.TX_VFO;
@@ -353,6 +362,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             if (gScreenToDisplay == DISPLAY_MAIN) {
                 if (gInputBoxIndex > 0) { // delete any inputted chars
                     gInputBoxIndex        = 0;
+                    APP_FrequencyInputCommit();
                     gRequestDisplayScreen = DISPLAY_MAIN;
                 }
 
@@ -429,6 +439,9 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 return;
             }
 
+            if (gInputBoxIndex == 1)
+                APP_FrequencyInputStart();
+
             if (gInputBoxIndex > maxDigits) {
                 gInputBox[--gInputBoxIndex] = 10;
                 return;
@@ -442,6 +455,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             uint8_t decimalsTarget = (decimalsInput < 3) ? 3 : decimalsInput;
             if (decimalsTarget > 5)
                 decimalsTarget = 5;
+            const uint8_t decimalsNeeded = MAIN_GetStepDecimals(gTxVfo->StepFrequency);
 
             // convert to int
             uint64_t inputFreq = StrToUL(inputStr);
@@ -477,7 +491,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 RADIO_ConfigureChannel(Vfo, VFO_CONFIGURE_RELOAD);
             }
 
-            const bool confirm_on_extra = extra_digits && ((Frequency % gTxVfo->StepFrequency) == 0);
+            const bool confirm_on_extra = extra_digits && (decimalsInput >= decimalsNeeded);
 
             Frequency = FREQUENCY_RoundToStep(Frequency, gTxVfo->StepFrequency);
 
@@ -492,6 +506,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 gInputBoxIndex = 0;
                 gKeyInputCountdown = 0;
                 gUpdateDisplay = true;
+                APP_FrequencyInputCommit();
             }
 
             gRequestSaveChannel = 1;
@@ -570,6 +585,16 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
             if (gScanStateDir == SCAN_OFF) {
                 if (gInputBoxIndex == 0)
                     return;
+                if (IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
+                    APP_FrequencyInputCancel();
+                    gInputBoxIndex = 0;
+                    gKeyInputCountdown = 0;
+#ifdef ENABLE_VOICE
+                    gAnotherVoiceID = VOICE_ID_CANCEL;
+#endif
+                    gRequestDisplayScreen = DISPLAY_MAIN;
+                    return;
+                }
                 gInputBox[--gInputBoxIndex] = 10;
 
                 gKeyInputCountdown = key_input_timeout_500ms;
@@ -601,6 +626,7 @@ static void MAIN_Key_EXIT(bool bKeyPressed, bool bKeyHeld)
     if (bKeyHeld && bKeyPressed) { // exit key held down
         if (gInputBoxIndex > 0 || gDTMF_InputBox_Index > 0 || gDTMF_InputMode)
         {   // cancel key input mode (channel/frequency entry)
+            APP_FrequencyInputCancel();
             gDTMF_InputMode       = false;
             gDTMF_InputBox_Index  = 0;
             memset(gDTMF_String, 0, sizeof(gDTMF_String));
@@ -644,6 +670,7 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
             if (gScreenToDisplay == DISPLAY_MAIN) {
                 if (gInputBoxIndex > 0) { // delete any inputted chars
                     gInputBoxIndex        = 0;
+                    APP_FrequencyInputCommit();
                     gRequestDisplayScreen = DISPLAY_MAIN;
                 }
 
@@ -660,6 +687,7 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
     if (!bKeyPressed && !gDTMF_InputMode) { // menu key released
         const bool bFlag = !gInputBoxIndex;
         gInputBoxIndex   = 0;
+        APP_FrequencyInputCommit();
 
         if (bFlag) {
             if (gScanStateDir != SCAN_OFF) {

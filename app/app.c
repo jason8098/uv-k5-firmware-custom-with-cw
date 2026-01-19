@@ -80,6 +80,11 @@
 static bool flagSaveVfo;
 static bool flagSaveSettings;
 static bool flagSaveChannel;
+static bool gFrequencyInputActive;
+static uint32_t gFrequencyInputStartFrequency;
+static uint8_t gFrequencyInputStartBand;
+static uint8_t gFrequencyInputStartScreenChannel;
+static uint8_t gFrequencyInputStartFreqChannel;
 
 static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 
@@ -1514,7 +1519,48 @@ void cancelUserInputModes(void)
         gBeepToPlay         = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         gUpdateStatus       = true;
         gUpdateDisplay      = true;
+        APP_FrequencyInputCommit();
     }
+}
+
+void APP_FrequencyInputStart(void)
+{
+    if (gFrequencyInputActive)
+        return;
+
+    const uint8_t vfo = gEeprom.TX_VFO;
+    gFrequencyInputActive = true;
+    gFrequencyInputStartFrequency = gTxVfo->freq_config_RX.Frequency;
+    gFrequencyInputStartBand = gTxVfo->Band;
+    gFrequencyInputStartScreenChannel = gEeprom.ScreenChannel[vfo];
+    gFrequencyInputStartFreqChannel = gEeprom.FreqChannel[vfo];
+}
+
+void APP_FrequencyInputCommit(void)
+{
+    gFrequencyInputActive = false;
+}
+
+void APP_FrequencyInputCancel(void)
+{
+    if (!gFrequencyInputActive)
+        return;
+
+    const uint8_t vfo = gEeprom.TX_VFO;
+    gTxVfo->freq_config_RX.Frequency = gFrequencyInputStartFrequency;
+    gTxVfo->Band = gFrequencyInputStartBand;
+    gEeprom.ScreenChannel[vfo] = gFrequencyInputStartScreenChannel;
+    gEeprom.FreqChannel[vfo] = gFrequencyInputStartFreqChannel;
+
+    SETTINGS_SaveVfoIndices();
+    gRequestSaveChannel = 1;
+    gVfoConfigureMode = VFO_CONFIGURE_RELOAD;
+    gRequestDisplayScreen = DISPLAY_MAIN;
+    gKeyInputCountdown = 0;
+    gUpdateDisplay = true;
+    gUpdateStatus = true;
+
+    gFrequencyInputActive = false;
 }
 
 // this is called once every 500ms

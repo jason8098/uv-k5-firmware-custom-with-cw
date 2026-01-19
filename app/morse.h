@@ -17,6 +17,10 @@
 #define MORSE_STOP_INTERVAL_DEFAULT_MS 45000u
 #define MORSE_STOP_INTERVAL_MIN_MS 1000u
 #define MORSE_STOP_INTERVAL_MAX_MS 60000u
+#define MORSE_BEEP_INTERVAL_DEFAULT_MS 7500u
+#define MORSE_BEEP_INTERVAL_MIN_MS 0u
+#define MORSE_BEEP_INTERVAL_MAX_MS 30000u
+#define MORSE_BEEP_INTERVAL_STEP_MS 100u
 
 // Function Prototypes
 void Morse_Init(void);
@@ -33,4 +37,5 @@ extern char* morseVersion;
 extern uint8_t morse_wpm;
 extern uint8_t morse_wpm_effective;
 extern uint16_t morse_stop_interval_ms;
+extern uint16_t morse_beep_ms;
 #endif // MORSE_CODE_H1

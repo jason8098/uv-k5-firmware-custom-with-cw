@@ -93,6 +93,7 @@ const t_menu_item MenuList[] =
     {"CWID",        MENU_CWID          },
     {"CW WPM",      MENU_CW_WPM        },
     {"CW Eff",      MENU_CW_EFF        },
+    {"CWBeep",      MENU_CW_BEEP       },
     {"CWInt",       MENU_CW_INT        },
     {"BLTime",      MENU_ABR           }, // was "ABR"
     {"BLMin",       MENU_ABR_MIN       },
@@ -1024,6 +1025,17 @@ void UI_DisplayMenu(void)
         case MENU_CW_EFF:
             sprintf(String, "%u WPM", gSubMenuSelection);
             break;
+
+        case MENU_CW_BEEP:
+        {
+            const uint16_t seconds = (uint16_t)(gSubMenuSelection / 10);
+            const uint16_t tenths = (uint16_t)(gSubMenuSelection % 10);
+            if (tenths == 0)
+                sprintf(String, "%us", seconds);
+            else
+                sprintf(String, "%u.%us", seconds, tenths);
+            break;
+        }
 
         case MENU_CW_INT:
             sprintf(String, "%us", gSubMenuSelection);

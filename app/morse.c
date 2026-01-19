@@ -30,6 +30,7 @@ char* morseVersion = "1.1.0";
 uint8_t morse_wpm = MORSE_WPM_DEFAULT;
 uint8_t morse_wpm_effective = MORSE_EFF_WPM_DEFAULT;
 uint16_t morse_stop_interval_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
+uint16_t morse_beep_ms = MORSE_BEEP_INTERVAL_DEFAULT_MS;
 
 #define MORSE_PARIS_WORD_UNITS    50u
 #define MORSE_PARIS_ELEMENT_UNITS 31u
@@ -79,8 +80,24 @@ static uint16_t MORSE_GetGapUnitMs(void)
 }
 
 void morseDelay(uint16_t tms){
-        gCustomCountdown_10ms     = tms/10;   
+        uint16_t last_seconds = 0xFFFFu;
+        const bool show_countdown =
+            (tms >= 1000u) &&
+            ((txstatus == 2 && tms == morse_beep_ms) ||
+             (txstatus == 3 && tms == morse_stop_interval_ms));
+
+        if (tms == 0) {
+            gCustomCountdown_10ms = 0;
+            gCustomTimeoutReached = true;
+            return;
+        }
+
+        gCustomCountdown_10ms     = (tms + 9u) / 10u;
         gCustomTimeoutReached = false;
+        if (show_countdown) {
+            last_seconds = (gCustomCountdown_10ms + 99u) / 100u;
+            UI_DisplayMORSE();
+        }
         while (!gCustomTimeoutReached) {
             if (KEYBOARD_Poll() == KEY_EXIT) {
                 txstatus=0;
@@ -91,6 +108,13 @@ void morseDelay(uint16_t tms){
             }
             if(txstatus==0){
                 return;
+            }
+            if (show_countdown) {
+                const uint16_t seconds_left = (gCustomCountdown_10ms + 99u) / 100u;
+                if (seconds_left != last_seconds) {
+                    last_seconds = seconds_left;
+                    UI_DisplayMORSE();
+                }
             }
         }
 }
@@ -212,7 +236,7 @@ void TransmitMorse(const char *text) {
         
         txstatus=2;
         UI_DisplayMORSE();
-        morseDelay(7500); 
+        morseDelay(morse_beep_ms);
         BK4819_EnterTxMute();
         BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
         if (txstatus == 0) {

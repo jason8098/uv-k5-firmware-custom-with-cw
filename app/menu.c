@@ -295,6 +295,11 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             *pMax = MORSE_EFF_WPM_MAX;
             break;
 
+        case MENU_CW_BEEP:
+            *pMin = MORSE_BEEP_INTERVAL_MIN_MS / MORSE_BEEP_INTERVAL_STEP_MS;
+            *pMax = MORSE_BEEP_INTERVAL_MAX_MS / MORSE_BEEP_INTERVAL_STEP_MS;
+            break;
+
         case MENU_CW_INT:
             *pMin = MORSE_STOP_INTERVAL_MIN_MS / 1000u;
             *pMax = MORSE_STOP_INTERVAL_MAX_MS / 1000u;
@@ -837,6 +842,15 @@ void MENU_AcceptSetting(void)
                 morse_wpm_effective = morse_wpm;
             break;
 
+        case MENU_CW_BEEP:
+        {
+            uint32_t beep_ms = (uint32_t)gSubMenuSelection * MORSE_BEEP_INTERVAL_STEP_MS;
+            if (beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
+                beep_ms = MORSE_BEEP_INTERVAL_MAX_MS;
+            morse_beep_ms = (uint16_t)beep_ms;
+            break;
+        }
+
         case MENU_CW_INT:
             morse_stop_interval_ms = (uint16_t)gSubMenuSelection * 1000u;
             break;
@@ -1321,6 +1335,10 @@ void MENU_ShowCurrentSetting(void)
 
         case MENU_CW_EFF:
             gSubMenuSelection = morse_wpm_effective;
+            break;
+
+        case MENU_CW_BEEP:
+            gSubMenuSelection = morse_beep_ms / MORSE_BEEP_INTERVAL_STEP_MS;
             break;
 
         case MENU_CW_INT:

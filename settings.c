@@ -33,6 +33,7 @@
 #define EEPROM_MORSE_WPM_OFFSET 10u
 #define EEPROM_MORSE_STOP_MS_OFFSET 11u
 #define EEPROM_MORSE_EFF_WPM_OFFSET 13u
+#define EEPROM_MORSE_BEEP_MS_OFFSET 14u
 
 #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
 static const uint32_t gDefaultFrequencyTable[] =
@@ -90,6 +91,16 @@ static void SETTINGS_LoadMorse(void)
         morse_wpm_effective = morse_wpm;
 
     {
+        const uint16_t beep_ms =
+            (uint16_t)data[EEPROM_MORSE_BEEP_MS_OFFSET] |
+            ((uint16_t)data[EEPROM_MORSE_BEEP_MS_OFFSET + 1] << 8);
+        if (beep_ms < MORSE_BEEP_INTERVAL_MIN_MS || beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
+            morse_beep_ms = MORSE_BEEP_INTERVAL_DEFAULT_MS;
+        else
+            morse_beep_ms = beep_ms;
+    }
+
+    {
         const uint16_t stop_ms =
             (uint16_t)data[EEPROM_MORSE_STOP_MS_OFFSET] |
             ((uint16_t)data[EEPROM_MORSE_STOP_MS_OFFSET + 1] << 8);
@@ -107,6 +118,7 @@ static void SETTINGS_SaveMorse(void)
     uint8_t wpm = morse_wpm;
     uint8_t eff_wpm = morse_wpm_effective;
     uint16_t stop_ms = morse_stop_interval_ms;
+    uint16_t beep_ms = morse_beep_ms;
 
     if (wpm < MORSE_WPM_MIN || wpm > MORSE_WPM_MAX)
         wpm = MORSE_WPM_DEFAULT;
@@ -114,6 +126,8 @@ static void SETTINGS_SaveMorse(void)
         eff_wpm = MORSE_EFF_WPM_DEFAULT;
     if (eff_wpm > wpm)
         eff_wpm = wpm;
+    if (beep_ms < MORSE_BEEP_INTERVAL_MIN_MS || beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)
+        beep_ms = MORSE_BEEP_INTERVAL_DEFAULT_MS;
     if (stop_ms < MORSE_STOP_INTERVAL_MIN_MS || stop_ms > MORSE_STOP_INTERVAL_MAX_MS)
         stop_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
 
@@ -125,6 +139,8 @@ static void SETTINGS_SaveMorse(void)
 
     data[EEPROM_MORSE_WPM_OFFSET] = wpm;
     data[EEPROM_MORSE_EFF_WPM_OFFSET] = eff_wpm;
+    data[EEPROM_MORSE_BEEP_MS_OFFSET] = (uint8_t)(beep_ms & 0xFFu);
+    data[EEPROM_MORSE_BEEP_MS_OFFSET + 1] = (uint8_t)((beep_ms >> 8) & 0xFFu);
     data[EEPROM_MORSE_STOP_MS_OFFSET] = (uint8_t)(stop_ms & 0xFFu);
     data[EEPROM_MORSE_STOP_MS_OFFSET + 1] = (uint8_t)((stop_ms >> 8) & 0xFFu);
 
@@ -134,6 +150,7 @@ static void SETTINGS_SaveMorse(void)
     morse_wpm = wpm;
     morse_wpm_effective = eff_wpm;
     morse_stop_interval_ms = stop_ms;
+    morse_beep_ms = beep_ms;
 }
 
 EEPROM_Config_t gEeprom = { 0 };

@@ -251,13 +251,15 @@ void TransmitMorse(const char *text) {
         const uint16_t letter_gap_ms_u16 = (uint16_t)(gap_unit_ms * 3u);
         const uint16_t word_gap_ms_u16 = (uint16_t)(gap_unit_ms * 7u);
         
-        if (morse_beep_ms > 0) {
+        const uint16_t beep_ms = morse_beep_ms;
+
+        if (beep_ms > 0) {
             BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
             BK4819_TransmitTone(false, morse_tone_hz);
 
             txstatus=2;
             UI_DisplayMORSE();
-            morseDelay(morse_beep_ms);
+            morseDelay(beep_ms);
             BK4819_EnterTxMute();
             BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
             if (txstatus == 0) {
@@ -271,10 +273,14 @@ void TransmitMorse(const char *text) {
             }
         } else {
             // Configure the tone generator without the BK4819_TransmitTone unmute delay.
+            txstatus=1;
+            UI_DisplayMORSE();
             MORSE_PrepareToneNoBeep(morse_tone_hz);
         }
-        txstatus=1;
-        UI_DisplayMORSE();
+        if (beep_ms > 0) {
+            txstatus=1;
+            UI_DisplayMORSE();
+        }
         while (*text) {
             if (txstatus == 0)
                 break;

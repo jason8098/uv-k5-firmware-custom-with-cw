@@ -755,7 +755,7 @@ KEYACTIONS_LIST = ["NONE",
                   ]
 
 MORSE_CWID_MAX_LEN = 10
-MORSE_CWID_SPLIT_LEN = 5
+MORSE_CWID_PART_LEN = 10
 MORSE_CWID_DEFAULT = "DE N0CALL"
 MORSE_WPM_DEFAULT = 15
 MORSE_WPM_MIN = 5
@@ -1498,8 +1498,10 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             is_root = True
         try:
             for element in settings:
-                if not isinstance(element, RadioSetting):
+                if isinstance(element, RadioSettingGroup):
                     self.set_settings(element)
+                    continue
+                if not isinstance(element, RadioSetting):
                     continue
 
                 elname = element.get_name()
@@ -1508,137 +1510,137 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
                     self._cw_settings_pending[elname] = str(element.value)
                     continue
 
-            # basic settings
+                # basic settings
 
             # VFO_A e80 ScreenChannel_A
-            if elname == "VFO_A_chn":
-                _mem.ScreenChannel_A = int(element.value)
-                if _mem.ScreenChannel_A < 200:
-                    _mem.MrChannel_A = _mem.ScreenChannel_A
-                elif _mem.ScreenChannel_A < 207:
-                    _mem.FreqChannel_A = _mem.ScreenChannel_A
-                else:
-                    _mem.NoaaChannel_A = _mem.ScreenChannel_A
+                if elname == "VFO_A_chn":
+                    _mem.ScreenChannel_A = int(element.value)
+                    if _mem.ScreenChannel_A < 200:
+                        _mem.MrChannel_A = _mem.ScreenChannel_A
+                    elif _mem.ScreenChannel_A < 207:
+                        _mem.FreqChannel_A = _mem.ScreenChannel_A
+                    else:
+                        _mem.NoaaChannel_A = _mem.ScreenChannel_A
 
             # VFO_B e83
-            elif elname == "VFO_B_chn":
-                _mem.ScreenChannel_B = int(element.value)
-                if _mem.ScreenChannel_B < 200:
-                    _mem.MrChannel_B = _mem.ScreenChannel_B
-                elif _mem.ScreenChannel_B < 207:
-                    _mem.FreqChannel_B = _mem.ScreenChannel_B
-                else:
-                    _mem.NoaaChannel_B = _mem.ScreenChannel_B
+                elif elname == "VFO_B_chn":
+                    _mem.ScreenChannel_B = int(element.value)
+                    if _mem.ScreenChannel_B < 200:
+                        _mem.MrChannel_B = _mem.ScreenChannel_B
+                    elif _mem.ScreenChannel_B < 207:
+                        _mem.FreqChannel_B = _mem.ScreenChannel_B
+                    else:
+                        _mem.NoaaChannel_B = _mem.ScreenChannel_B
 
             # TX_VFO  channel selected A,B
-            elif elname == "TX_VFO":
-                _mem.TX_VFO = int(element.value)
+                elif elname == "TX_VFO":
+                    _mem.TX_VFO = int(element.value)
 
             # call channel
-            elif elname == "call_channel":
-                _mem.call_channel = int(element.value)
+                elif elname == "call_channel":
+                    _mem.call_channel = int(element.value)
 
             # squelch
-            elif elname == "squelch":
-                _mem.squelch = int(element.value)
+                elif elname == "squelch":
+                    _mem.squelch = int(element.value)
 
-            # TOT
-            elif elname == "tot":
-                _mem.max_talk_time = int(element.value)
+                # TOT
+                elif elname == "tot":
+                    _mem.max_talk_time = int(element.value)
 
-            # NOAA autoscan
-            elif elname == "noaa_autoscan":
-                _mem.noaa_autoscan = int(element.value)
+                # NOAA autoscan
+                elif elname == "noaa_autoscan":
+                    _mem.noaa_autoscan = int(element.value)
 
-            # VOX
-            elif elname == "vox":
-                voxvalue = int(element.value)
-                _mem.vox_switch = voxvalue > 0
-                _mem.vox_level = (voxvalue - 1) if _mem.vox_switch else 0
+                # VOX
+                elif elname == "vox":
+                    voxvalue = int(element.value)
+                    _mem.vox_switch = voxvalue > 0
+                    _mem.vox_level = (voxvalue - 1) if _mem.vox_switch else 0
 
-            # mic gain
-            elif elname == "mic_gain":
-                _mem.mic_gain = int(element.value)
+                # mic gain
+                elif elname == "mic_gain":
+                    _mem.mic_gain = int(element.value)
 
-            # Channel display mode
-            elif elname == "channel_display_mode":
-                _mem.channel_display_mode = int(element.value)
+                # Channel display mode
+                elif elname == "channel_display_mode":
+                    _mem.channel_display_mode = int(element.value)
 
-            # RX Mode
-            elif elname == "rx_mode":
-                tmptxmode = int(element.value)
-                tmpmainvfo = _mem.TX_VFO + 1
-                _mem.crossband = tmpmainvfo * bool(tmptxmode & 0b10)
-                _mem.dual_watch = tmpmainvfo * bool(tmptxmode & 0b01)
+                # RX Mode
+                elif elname == "rx_mode":
+                    tmptxmode = int(element.value)
+                    tmpmainvfo = _mem.TX_VFO + 1
+                    _mem.crossband = tmpmainvfo * bool(tmptxmode & 0b10)
+                    _mem.dual_watch = tmpmainvfo * bool(tmptxmode & 0b01)
 
-            # Battery Save
-            elif elname == "battery_save":
-                _mem.battery_save = int(element.value)
+                # Battery Save
+                elif elname == "battery_save":
+                    _mem.battery_save = int(element.value)
 
-            # Backlight auto mode
-            elif elname == "backlight_time":
-                _mem.backlight_time = int(element.value)
+                # Backlight auto mode
+                elif elname == "backlight_time":
+                    _mem.backlight_time = int(element.value)
 
-            # Backlight min
-            elif elname == "backlight_min":
-                _mem.backlight_min = int(element.value)
+                # Backlight min
+                elif elname == "backlight_min":
+                    _mem.backlight_min = int(element.value)
 
-            # Backlight max
-            elif elname == "backlight_max":
-                _mem.backlight_max = int(element.value)
+                # Backlight max
+                elif elname == "backlight_max":
+                    _mem.backlight_max = int(element.value)
 
-            # Backlight TX_RX
-            elif elname == "backlight_on_TX_RX":
-                _mem.backlight_on_TX_RX = int(element.value)
-            # AM_fix
-            elif elname == "AM_fix":
-                _mem.AM_fix = int(element.value)
+                # Backlight TX_RX
+                elif elname == "backlight_on_TX_RX":
+                    _mem.backlight_on_TX_RX = int(element.value)
+                # AM_fix
+                elif elname == "AM_fix":
+                    _mem.AM_fix = int(element.value)
 
-            # mic_bar
-            elif elname == "mic_bar":
-                _mem.mic_bar = int(element.value)
+                # mic_bar
+                elif elname == "mic_bar":
+                    _mem.mic_bar = int(element.value)
 
-            # Batterie txt
-            elif elname == "battery_text":
-                _mem.battery_text = int(element.value)
+                # Batterie txt
+                elif elname == "battery_text":
+                    _mem.battery_text = int(element.value)
 
-            # Tail tone elimination
-            elif elname == "ste":
-                _mem.ste = int(element.value)
+                # Tail tone elimination
+                elif elname == "ste":
+                    _mem.ste = int(element.value)
 
-            # VFO Open
-            elif elname == "freq_mode_allowed":
-                _mem.freq_mode_allowed = int(element.value)
+                # VFO Open
+                elif elname == "freq_mode_allowed":
+                    _mem.freq_mode_allowed = int(element.value)
 
-            # Beep control
-            elif elname == "button_beep":
-                _mem.button_beep = int(element.value)
+                # Beep control
+                elif elname == "button_beep":
+                    _mem.button_beep = int(element.value)
 
-            # Scan resume mode
-            elif elname == "scan_resume_mode":
-                _mem.scan_resume_mode = int(element.value)
+                # Scan resume mode
+                elif elname == "scan_resume_mode":
+                    _mem.scan_resume_mode = int(element.value)
 
-            # Keypad lock
-            elif elname == "key_lock":
-                _mem.key_lock = int(element.value)
+                # Keypad lock
+                elif elname == "key_lock":
+                    _mem.key_lock = int(element.value)
 
-            # Auto keypad lock
-            elif elname == "auto_keypad_lock":
-                _mem.auto_keypad_lock = int(element.value)
+                # Auto keypad lock
+                elif elname == "auto_keypad_lock":
+                    _mem.auto_keypad_lock = int(element.value)
 
-            # Power on display mode
-            elif elname == "welcome_mode":
-                _mem.power_on_dispmode = int(element.value)
+                # Power on display mode
+                elif elname == "welcome_mode":
+                    _mem.power_on_dispmode = int(element.value)
 
-            # Keypad Tone
-            elif elname == "voice":
-                _mem.voice = int(element.value)
+                # Keypad Tone
+                elif elname == "voice":
+                    _mem.voice = int(element.value)
 
-            elif elname == "s0_level":
-                _mem.s0_level = -int(element.value)
+                elif elname == "s0_level":
+                    _mem.s0_level = -int(element.value)
 
-            elif elname == "s9_level":
-                _mem.s9_level = -int(element.value)
+                elif elname == "s9_level":
+                    _mem.s9_level = -int(element.value)
 
 #            elif elname == "password":
 #                if element.value.get_value() is None or element.value == "":
@@ -1646,57 +1648,57 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 #                else:
 #                    _mem.password = int(element.value)
 
-            # Alarm mode
-            elif elname == "alarm_mode":
-                _mem.alarm_mode = int(element.value)
+                # Alarm mode
+                elif elname == "alarm_mode":
+                    _mem.alarm_mode = int(element.value)
 
-            # Reminding of end of talk
-            elif elname == "roger_beep":
-                _mem.roger_beep = int(element.value)
+                # Reminding of end of talk
+                elif elname == "roger_beep":
+                    _mem.roger_beep = int(element.value)
 
-            # Repeater tail tone elimination
-            elif elname == "rp_ste":
-                _mem.rp_ste = int(element.value)
+                # Repeater tail tone elimination
+                elif elname == "rp_ste":
+                    _mem.rp_ste = int(element.value)
 
-            # Logo string 1
-            elif elname == "logo1":
-                bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
-                _mem.logo_line1 = bts[0:12]+"\x00\xff\xff\xff"
+                # Logo string 1
+                elif elname == "logo1":
+                    bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
+                    _mem.logo_line1 = bts[0:12]+"\x00\xff\xff\xff"
 
-            # Logo string 2
-            elif elname == "logo2":
-                bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
-                _mem.logo_line2 = bts[0:12]+"\x00\xff\xff\xff"
+                # Logo string 2
+                elif elname == "logo2":
+                    bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
+                    _mem.logo_line2 = bts[0:12]+"\x00\xff\xff\xff"
 
-            # CW/Morse settings
-            elif elname == "cw_wpm":
-                _mem.morse.morse_wpm = int(element.value)
+                # CW/Morse settings
+                elif elname == "cw_wpm":
+                    _mem.morse.morse_wpm = int(element.value)
 
-            elif elname == "cw_eff_wpm":
-                _mem.morse.morse_eff_wpm = int(element.value)
+                elif elname == "cw_eff_wpm":
+                    _mem.morse.morse_eff_wpm = int(element.value)
 
-            elif elname == "cw_tone_hz":
-                _mem.morse_extra.morse_tone_hz = int(element.value)
+                elif elname == "cw_tone_hz":
+                    _mem.morse_extra.morse_tone_hz = int(element.value)
 
-            elif elname == "cw_beep_ms":
-                _mem.morse.morse_beep_ms = int(element.value)
+                elif elname == "cw_beep_ms":
+                    _mem.morse.morse_beep_ms = int(element.value)
 
-            elif elname == "cw_stop_ms":
-                _mem.morse.morse_stop_ms = int(element.value)
+                elif elname == "cw_stop_ms":
+                    _mem.morse.morse_stop_ms = int(element.value)
 
-            # unlock settings
+                # unlock settings
 
-            # FLOCK
-            elif elname == "int_flock":
-                _mem.int_flock = int(element.value)
+                # FLOCK
+                elif elname == "int_flock":
+                    _mem.int_flock = int(element.value)
 
 #            # 350TX
 #            elif elname == "int_350tx":
 #                _mem.int_350tx = int(element.value)
 
-            # KILLED
-            elif elname == "int_KILLED":
-                _mem.int_KILLED = int(element.value)
+                # KILLED
+                elif elname == "int_KILLED":
+                    _mem.int_KILLED = int(element.value)
 
 #            # 200TX
 #            elif elname == "int_200tx":
@@ -1706,209 +1708,210 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 #            elif elname == "int_500tx":
 #                _mem.int_500tx = int(element.value)
 
-            # 350EN
-            elif elname == "int_350en":
-                _mem.int_350en = int(element.value)
+                # 350EN
+                elif elname == "int_350en":
+                    _mem.int_350en = int(element.value)
 
-            # SCREN
-            elif elname == "int_scren":
-                _mem.int_scren = int(element.value)
+                # SCREN
+                elif elname == "int_scren":
+                    _mem.int_scren = int(element.value)
 
-            # battery type
-            elif elname == "Battery_type":
-                _mem.Battery_type = int(element.value)
+                # battery type
+                elif elname == "Battery_type":
+                    _mem.Battery_type = int(element.value)
 
-            # set low_power f4hwn
-            elif elname == "set_pwr":
-                _mem.set_pwr = int(element.value)
+                # set low_power f4hwn
+                elif elname == "set_pwr":
+                    _mem.set_pwr = int(element.value)
 
-            # set ptt f4hwn
-            elif elname == "set_ptt":
-                _mem.set_ptt = int(element.value)
+                # set ptt f4hwn
+                elif elname == "set_ptt":
+                    _mem.set_ptt = int(element.value)
 
-            # set tot f4hwn
-            elif elname == "set_tot":
-                _mem.set_tot = int(element.value)
+                # set tot f4hwn
+                elif elname == "set_tot":
+                    _mem.set_tot = int(element.value)
 
-            # set eot f4hwn
-            elif elname == "set_eot":
-                _mem.set_eot = int(element.value)
+                # set eot f4hwn
+                elif elname == "set_eot":
+                    _mem.set_eot = int(element.value)
 
-            # set_contrast f4hwn
-            elif elname == "set_contrast":
-                _mem.set_contrast = int(element.value)
+                # set_contrast f4hwn
+                elif elname == "set_contrast":
+                    _mem.set_contrast = int(element.value)
 
-            # set inv f4hwn
-            elif elname == "set_inv":
-                _mem.set_inv = int(element.value)
+                # set inv f4hwn
+                elif elname == "set_inv":
+                    _mem.set_inv = int(element.value)
 
-            # set lck f4hwn
-            elif elname == "set_lck":
-                _mem.set_lck = int(element.value)
+                # set lck f4hwn
+                elif elname == "set_lck":
+                    _mem.set_lck = int(element.value)
 
-            # set met f4hwn
-            elif elname == "set_met":
-                _mem.set_met = int(element.value)
+                # set met f4hwn
+                elif elname == "set_met":
+                    _mem.set_met = int(element.value)
 
-            # set gui f4hwn
-            elif elname == "set_gui":
-                _mem.set_gui = int(element.value)
+                # set gui f4hwn
+                elif elname == "set_gui":
+                    _mem.set_gui = int(element.value)
                                
-            # set tmr f4hwn
-            elif elname == "set_tmr":
-                _mem.set_tmr = int(element.value)
+                # set tmr f4hwn
+                elif elname == "set_tmr":
+                    _mem.set_tmr = int(element.value)
 
-            # set off f4hwn
-            elif elname == "set_off_tmr":
-                _mem.set_off_tmr = int(element.value)
+                # set off f4hwn
+                elif elname == "set_off_tmr":
+                    _mem.set_off_tmr = int(element.value)
 
-            # set nfm f4hwn
-            elif elname == "set_nfm":
-                _mem.set_nfm = int(element.value)
+                # set nfm f4hwn
+                elif elname == "set_nfm":
+                    _mem.set_nfm = int(element.value)
 
-            # set key f4hwn
-            elif elname == "set_key":
-                _mem.set_key = int(element.value)
+                # set key f4hwn
+                elif elname == "set_key":
+                    _mem.set_key = int(element.value)
 
-             # set menu lock f4hwn
-            elif elname == "set_menu_lock":
-                _mem.set_menu_lock = int(element.value)
+                 # set menu lock f4hwn
+                elif elname == "set_menu_lock":
+                    _mem.set_menu_lock = int(element.value)
 
-            # fm radio
-            for i in range(1, 21):
-                freqname = "FM_" + str(i)
-                if elname == freqname:
-                    val = str(element.value).strip()
-                    try:
-                        val2 = int(float(val)*10)
-                    except Exception:
-                        val2 = 0xffff
+                # fm radio
+                for i in range(1, 21):
+                    freqname = "FM_" + str(i)
+                    if elname == freqname:
+                        val = str(element.value).strip()
+                        try:
+                            val2 = int(float(val)*10)
+                        except Exception:
+                            val2 = 0xffff
 
-                    if val2 < FMMIN*10 or val2 > FMMAX*10:
-                        val2 = 0xffff
+                        if val2 < FMMIN*10 or val2 > FMMAX*10:
+                            val2 = 0xffff
 #                        raise errors.InvalidValueError(
 #                                "FM radio frequency should be a value "
 #                                "in the range %.1f - %.1f" % (FMMIN , FMMAX))
-                    _mem.fmfreq[i-1] = val2
+                        _mem.fmfreq[i-1] = val2
 
-            # dtmf settings
-            if elname == "dtmf_side_tone":
-                _mem.dtmf.side_tone = int(element.value)
+                # dtmf settings
+                if elname == "dtmf_side_tone":
+                    _mem.dtmf.side_tone = int(element.value)
 
-            elif elname == "dtmf_separate_code":
-                _mem.dtmf.separate_code = str(element.value)
+                elif elname == "dtmf_separate_code":
+                    _mem.dtmf.separate_code = str(element.value)
 
-            elif elname == "dtmf_group_call_code":
-                _mem.dtmf.group_call_code = element.value
+                elif elname == "dtmf_group_call_code":
+                    _mem.dtmf.group_call_code = element.value
 
-            elif elname == "dtmf_decode_response":
-                _mem.dtmf.decode_response = int(element.value)
+                elif elname == "dtmf_decode_response":
+                    _mem.dtmf.decode_response = int(element.value)
 
-            elif elname == "dtmf_auto_reset_time":
-                _mem.dtmf.auto_reset_time = int(element.value)
+                elif elname == "dtmf_auto_reset_time":
+                    _mem.dtmf.auto_reset_time = int(element.value)
 
-            elif elname == "dtmf_preload_time":
-                _mem.dtmf.preload_time = int(int(element.value)/10)
+                elif elname == "dtmf_preload_time":
+                    _mem.dtmf.preload_time = int(int(element.value)/10)
 
-            elif elname == "dtmf_first_code_persist_time":
-                _mem.dtmf.first_code_persist_time = int(int(element.value)/10)
+                elif elname == "dtmf_first_code_persist_time":
+                    _mem.dtmf.first_code_persist_time = int(int(element.value)/10)
 
-            elif elname == "dtmf_hash_persist_time":
-                _mem.dtmf.hash_persist_time = int(int(element.value)/10)
+                elif elname == "dtmf_hash_persist_time":
+                    _mem.dtmf.hash_persist_time = int(int(element.value)/10)
 
-            elif elname == "dtmf_code_persist_time":
-                _mem.dtmf.code_persist_time = \
-                        int(int(element.value)/10)
+                elif elname == "dtmf_code_persist_time":
+                    _mem.dtmf.code_persist_time = \
+                            int(int(element.value)/10)
 
-            elif elname == "dtmf_code_interval_time":
-                _mem.dtmf.code_interval_time = \
-                        int(int(element.value)/10)
+                elif elname == "dtmf_code_interval_time":
+                    _mem.dtmf.code_interval_time = \
+                            int(int(element.value)/10)
 
-            elif elname == "dtmf_permit_remote_kill":
-                _mem.dtmf.permit_remote_kill = \
-                        int(element.value)
+                elif elname == "dtmf_permit_remote_kill":
+                    _mem.dtmf.permit_remote_kill = \
+                            int(element.value)
 
-            elif elname == "dtmf_dtmf_local_code":
-                k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*3
-                _mem.dtmf.local_code = k[0:3]
+                elif elname == "dtmf_dtmf_local_code":
+                    k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*3
+                    _mem.dtmf.local_code = k[0:3]
 
-            elif elname == "dtmf_dtmf_up_code":
-                k = str(element.value).strip("\x20\xff\x00") + "\x00"*16
-                _mem.dtmf.up_code = k[0:16]
+                elif elname == "dtmf_dtmf_up_code":
+                    k = str(element.value).strip("\x20\xff\x00") + "\x00"*16
+                    _mem.dtmf.up_code = k[0:16]
 
-            elif elname == "dtmf_dtmf_down_code":
-                k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*16
-                _mem.dtmf.down_code = k[0:16]
+                elif elname == "dtmf_dtmf_down_code":
+                    k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*16
+                    _mem.dtmf.down_code = k[0:16]
 
-            elif elname == "dtmf_kill_code":
-                k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
-                _mem.dtmf.kill_code = k[0:5]
+                elif elname == "dtmf_kill_code":
+                    k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
+                    _mem.dtmf.kill_code = k[0:5]
 
-            elif elname == "dtmf_revive_code":
-                k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
-                _mem.dtmf.revive_code = k[0:5]
+                elif elname == "dtmf_revive_code":
+                    k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
+                    _mem.dtmf.revive_code = k[0:5]
 
-            elif elname == "live_DTMF_decoder":
-                _mem.live_DTMF_decoder = int(element.value)
+                elif elname == "live_DTMF_decoder":
+                    _mem.live_DTMF_decoder = int(element.value)
 
-            # dtmf contacts
-            for i in range(1, 17):
-                varname = "DTMF_" + str(i)
-                if elname == varname:
-                    k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*8
-                    _mem.dtmfcontact[i-1].name = k[0:8]
+                # dtmf contacts
+                for i in range(1, 17):
+                    varname = "DTMF_" + str(i)
+                    if elname == varname:
+                        k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*8
+                        _mem.dtmfcontact[i-1].name = k[0:8]
 
-                varnumname = "DTMFNUM_" + str(i)
-                if elname == varnumname:
-                    k = str(element.value).rstrip("\x20\xff\x00") + "\xff"*3
-                    _mem.dtmfcontact[i-1].number = k[0:3]
+                    varnumname = "DTMFNUM_" + str(i)
+                    if elname == varnumname:
+                        k = str(element.value).rstrip("\x20\xff\x00") + "\xff"*3
+                        _mem.dtmfcontact[i-1].number = k[0:3]
 
-            # scanlist stuff
-            if elname == "slDef":
-                _mem.slDef = int(element.value)
+                # scanlist stuff
+                if elname == "slDef":
+                    _mem.slDef = int(element.value)
 
-            elif elname == "sl1PriorEnab":
-                _mem.sl1PriorEnab = int(element.value)
+                elif elname == "sl1PriorEnab":
+                    _mem.sl1PriorEnab = int(element.value)
 
-            elif elname == "sl2PriorEnab":
-                _mem.sl2PriorEnab = int(element.value)
+                elif elname == "sl2PriorEnab":
+                    _mem.sl2PriorEnab = int(element.value)
                 
-            elif elname == "sl3PriorEnab":
-                _mem.sl3PriorEnab = int(element.value)
+                elif elname == "sl3PriorEnab":
+                    _mem.sl3PriorEnab = int(element.value)
 
-            elif elname in ["sl1PriorCh1", "sl1PriorCh2", "sl2PriorCh1",
-                            "sl2PriorCh2", "sl3PriorCh1", "sl3PriorCh2"]:
-                val = int(element.value)
+                elif elname in ["sl1PriorCh1", "sl1PriorCh2", "sl2PriorCh1",
+                                "sl2PriorCh2", "sl3PriorCh1", "sl3PriorCh2"]:
+                    val = int(element.value)
 
-                if val > 200 or val < 1:
-                    val = 0xff
-                else:
-                    val -= 1
+                    if val > 200 or val < 1:
+                        val = 0xff
+                    else:
+                        val -= 1
 
-                _mem[elname] = val
+                    _mem[elname] = val
 
-            if elname == "key1_shortpress_action":
-                _mem.key1_shortpress_action = KEYACTIONS_LIST.index(element.value)
+                if elname == "key1_shortpress_action":
+                    _mem.key1_shortpress_action = KEYACTIONS_LIST.index(element.value)
 
-            elif elname == "key1_longpress_action":
-                _mem.key1_longpress_action = KEYACTIONS_LIST.index(element.value)
+                elif elname == "key1_longpress_action":
+                    _mem.key1_longpress_action = KEYACTIONS_LIST.index(element.value)
 
-            elif elname == "key2_shortpress_action":
-                _mem.key2_shortpress_action = KEYACTIONS_LIST.index(element.value)
+                elif elname == "key2_shortpress_action":
+                    _mem.key2_shortpress_action = KEYACTIONS_LIST.index(element.value)
 
-            elif elname == "key2_longpress_action":
-                _mem.key2_longpress_action = KEYACTIONS_LIST.index(element.value)
+                elif elname == "key2_longpress_action":
+                    _mem.key2_longpress_action = KEYACTIONS_LIST.index(element.value)
 
-            elif elname == "keyM_longpress_action":
-                _mem.keyM_longpress_action = KEYACTIONS_LIST.index(element.value)
+                elif elname == "keyM_longpress_action":
+                    _mem.keyM_longpress_action = KEYACTIONS_LIST.index(element.value)
 
 # this change to send power level chan in the calibration but under macos it give error
 # bugfix calibration : remove the comment on next 2 line:
 #            elif elname == "upload_calibration":
 #                self._upload_calibration = bool(element.value)
 
-            elif element.changed() and elname.startswith("_mem.cal."):
-                exec(elname + " = element.value.get_value()")
+                elif hasattr(element, "changed") and element.changed() and \
+                        elname.startswith("_mem.cal."):
+                    exec(elname + " = element.value.get_value()")
         finally:
             if is_root:
                 if self._cw_settings_pending:
@@ -2094,19 +2097,19 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             cwid = cwid[:MORSE_CWID_MAX_LEN]
         if not cwid.strip():
             cwid = ""
-        cwid_1 = cwid[:MORSE_CWID_SPLIT_LEN]
-        cwid_2 = cwid[MORSE_CWID_SPLIT_LEN:]
+        cwid_1 = cwid[:MORSE_CWID_PART_LEN]
+        cwid_2 = cwid[MORSE_CWID_PART_LEN:]
 
-        val = RadioSettingValueString(0, MORSE_CWID_SPLIT_LEN, cwid_1)
+        val = RadioSettingValueString(0, MORSE_CWID_PART_LEN, cwid_1)
         val.set_charset(chirp_common.CHARSET_ASCII)
         cwid_1_setting = RadioSetting("cwid_1", "CW ID Part 1 (CWID1)", val)
-        cwid_1_setting.set_doc('CWID1: First part of CW ID (max 5 chars). Leave blank to use only part 2.')
+        cwid_1_setting.set_doc('CWID1: First part of CW ID (max 10 chars). Leave blank to use only part 2.')
         cw.append(cwid_1_setting)
 
-        val = RadioSettingValueString(0, MORSE_CWID_MAX_LEN - MORSE_CWID_SPLIT_LEN, cwid_2)
+        val = RadioSettingValueString(0, MORSE_CWID_PART_LEN, cwid_2)
         val.set_charset(chirp_common.CHARSET_ASCII)
         cwid_2_setting = RadioSetting("cwid_2", "CW ID Part 2 (CWID2)", val)
-        cwid_2_setting.set_doc('CWID2: Second part of CW ID (max 5 chars). Leave blank to use only part 1.')
+        cwid_2_setting.set_doc('CWID2: Second part of CW ID (max 10 chars). Leave blank to use only part 1.')
         cw.append(cwid_2_setting)
 
         morse_wpm = min_max_def(_mem.morse.morse_wpm, MORSE_WPM_MIN,

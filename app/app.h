@@ -32,6 +32,8 @@ void     APP_TimeSlice10ms(void);
 void     APP_TimeSlice500ms(void);
 void     APP_FrequencyInputStart(void);
 bool     APP_FrequencyInputIsValidComplete(void);
+void     APP_FrequencyInputScheduleAutoConfirm(void);
+void     APP_FrequencyInputClearAutoConfirm(void);
 void     APP_FrequencyInputCommit(void);
 void     APP_FrequencyInputCancel(void);
 

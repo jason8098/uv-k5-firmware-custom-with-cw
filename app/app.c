@@ -85,6 +85,8 @@ static uint32_t gFrequencyInputStartFrequency;
 static uint8_t gFrequencyInputStartBand;
 static uint8_t gFrequencyInputStartScreenChannel;
 static uint8_t gFrequencyInputStartFreqChannel;
+static uint8_t gFrequencyInputAutoConfirmCountdown_10ms;
+static const uint8_t frequency_input_auto_confirm_10ms = 20;
 
 static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 
@@ -1490,6 +1492,23 @@ void APP_TimeSlice10ms(void)
 
     SCANNER_TimeSlice10ms();
 
+    if (gFrequencyInputAutoConfirmCountdown_10ms > 0) {
+        if (--gFrequencyInputAutoConfirmCountdown_10ms == 0) {
+            if (gFrequencyInputActive && gInputBoxIndex > 0 && IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
+                if (APP_FrequencyInputIsValidComplete()) {
+                    APP_FrequencyInputCommit();
+                } else {
+                    APP_FrequencyInputCancel();
+                    gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+                }
+                gInputBoxIndex = 0;
+                gKeyInputCountdown = 0;
+                gUpdateStatus = true;
+                gUpdateDisplay = true;
+            }
+        }
+    }
+
 #ifdef ENABLE_AIRCOPY
     if (gScreenToDisplay == DISPLAY_AIRCOPY && gAircopyState == AIRCOPY_TRANSFER && gAirCopyIsSendMode == 1) {
         if (!AIRCOPY_SendMessage()) {
@@ -1528,12 +1547,24 @@ void APP_FrequencyInputStart(void)
     if (gFrequencyInputActive)
         return;
 
+    gFrequencyInputAutoConfirmCountdown_10ms = 0;
+
     const uint8_t vfo = gEeprom.TX_VFO;
     gFrequencyInputActive = true;
     gFrequencyInputStartFrequency = gTxVfo->freq_config_RX.Frequency;
     gFrequencyInputStartBand = gTxVfo->Band;
     gFrequencyInputStartScreenChannel = gEeprom.ScreenChannel[vfo];
     gFrequencyInputStartFreqChannel = gEeprom.FreqChannel[vfo];
+}
+
+void APP_FrequencyInputScheduleAutoConfirm(void)
+{
+    gFrequencyInputAutoConfirmCountdown_10ms = frequency_input_auto_confirm_10ms;
+}
+
+void APP_FrequencyInputClearAutoConfirm(void)
+{
+    gFrequencyInputAutoConfirmCountdown_10ms = 0;
 }
 
 bool APP_FrequencyInputIsValidComplete(void)
@@ -1575,6 +1606,7 @@ bool APP_FrequencyInputIsValidComplete(void)
 void APP_FrequencyInputCommit(void)
 {
     gFrequencyInputActive = false;
+    gFrequencyInputAutoConfirmCountdown_10ms = 0;
 }
 
 void APP_FrequencyInputCancel(void)
@@ -1597,6 +1629,7 @@ void APP_FrequencyInputCancel(void)
     gUpdateStatus = true;
 
     gFrequencyInputActive = false;
+    gFrequencyInputAutoConfirmCountdown_10ms = 0;
 }
 
 // this is called once every 500ms

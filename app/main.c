@@ -45,15 +45,6 @@
 #include "driver/system.h"
 
 
-static uint8_t MAIN_GetStepDecimals(uint16_t step)
-{
-    if ((step % 100u) == 0)
-        return 3;
-    if ((step % 10u) == 0)
-        return 4;
-    return 5;
-}
-
 static const uint8_t key_input_timeout_vfo_500ms = 10000 / 500;
 
 static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
@@ -437,6 +428,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 maxDigits = sizeof(gInputBox);
 
             if (gInputBoxIndex == 0) {
+                APP_FrequencyInputClearAutoConfirm();
                 // do nothing
                 return;
             }
@@ -450,6 +442,10 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             }
             
             gKeyInputCountdown = key_input_timeout_vfo_500ms;
+            if (gInputBoxIndex >= totalDigits)
+                APP_FrequencyInputScheduleAutoConfirm();
+            else
+                APP_FrequencyInputClearAutoConfirm();
 
             const char *inputStr = INPUTBOX_GetAscii();
             uint8_t inputLength = gInputBoxIndex;
@@ -457,8 +453,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             uint8_t decimalsTarget = (decimalsInput < 3) ? 3 : decimalsInput;
             if (decimalsTarget > 5)
                 decimalsTarget = 5;
-            const uint8_t decimalsNeeded = MAIN_GetStepDecimals(gTxVfo->StepFrequency);
-
             // convert to int
             uint64_t inputFreq = StrToUL(inputStr);
             for (uint8_t i = decimalsInput; i < decimalsTarget; i++)
@@ -467,7 +461,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 inputFreq *= 10u;
 
             uint32_t Frequency = (inputFreq > 0xFFFFFFFFu) ? 0xFFFFFFFFu : (uint32_t)inputFreq;
-            const bool extra_digits = inputLength > totalDigits;
 
             // clamp the frequency entered to some valid value
             if (Frequency < frequencyBandTable[0].lower) {
@@ -493,8 +486,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 RADIO_ConfigureChannel(Vfo, VFO_CONFIGURE_RELOAD);
             }
 
-            const bool confirm_on_extra = extra_digits && (decimalsInput >= decimalsNeeded);
-
             Frequency = FREQUENCY_RoundToStep(Frequency, gTxVfo->StepFrequency);
 
             if (Frequency >= BX4819_band1.upper && Frequency < BX4819_band2.lower)
@@ -504,19 +495,6 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             }
 
             gTxVfo->freq_config_RX.Frequency = Frequency;
-            if (confirm_on_extra) {
-                if (APP_FrequencyInputIsValidComplete()) {
-                    gInputBoxIndex = 0;
-                    gKeyInputCountdown = 0;
-                    gUpdateDisplay = true;
-                    APP_FrequencyInputCommit();
-                } else {
-                    APP_FrequencyInputCancel();
-                    gInputBoxIndex = 0;
-                    gKeyInputCountdown = 0;
-                    gUpdateDisplay = true;
-                }
-            }
 
             gRequestSaveChannel = 1;
             return;

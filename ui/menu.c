@@ -48,7 +48,7 @@ const t_menu_item MenuList[] =
     {"CW WPM",      MENU_CW_WPM        },
     {"CWTone",      MENU_CW_TONE       },
     {"CWBeep",      MENU_CW_BEEP       },
-    {"CWInt",       MENU_CW_INT        },
+    {"CWStop",       MENU_CW_INT        },
     {"RxDCS",       MENU_R_DCS         }, // was "R_DCS"
     {"RxCTCS",      MENU_R_CTCS        }, // was "R_CTCS"
     {"TxDCS",       MENU_T_DCS         }, // was "T_DCS"

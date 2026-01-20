@@ -1747,7 +1747,7 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             elif elname == "battery_text":
                 _mem.battery_text = int(element.value)
 
-            # CW/Morse settings
+            # CW settings
             elif elname == "cwid_1":
                 _mem.morse.cwid1 = str(element.value)
 
@@ -2110,7 +2110,7 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         basic = RadioSettingGroup("basic", "Basic Settings")
         advanced = RadioSettingGroup("advanced", "Advanced Settings")
         keya = RadioSettingGroup("keya", "Programmable Keys")
-        cw = RadioSettingGroup("cw", "CW/Morse Settings")
+        cw = RadioSettingGroup("cw", "CW Settings")
         dtmf = RadioSettingGroup("dtmf", "DTMF Settings")
         dtmfc = RadioSettingGroup("dtmfc", "DTMF Contacts")
         scanl = RadioSettingGroup("scn", "Scan Lists")

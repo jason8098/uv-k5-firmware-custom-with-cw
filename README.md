@@ -19,11 +19,21 @@ Video will be uploaded soon.
 # Customization (New Update v1.1.0)
 Customization of the CWID can now be done in the Radio menu (No. 4-8) or Via Chirp.<br>
 You can customize variety of parameters:
-- WPM (Speed, Effective Speed)
+- WPM
 - Tone Frequency in Hz
-- Initial Beep Interval 
-- Waiting time Interval
+- Initial Beep time 
+- Waiting time
 
 # Steps to Flash & Configure
+
+## Flashing
 1. Download the latest firmware file from the release page.
-2. Upload it using Programming Cable with 
+2. Upload it using Programming Cable.
+3. Done!
+
+## Configuration
+1. Load driver module in Chirp.
+2. Click Radio > Download from the radio > OK
+3. Settings > CW Settings
+4. Edit Parameters you want.
+5. Once done, Click Radio > Upload > OK

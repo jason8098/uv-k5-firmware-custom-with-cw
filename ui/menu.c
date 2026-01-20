@@ -1008,6 +1008,7 @@ void UI_DisplayMenu(void)
                 edit_index = -1;
             if (edit_index < 0)
             {
+                const uint8_t menu_id = UI_MENU_GetCurrentMenuId();
                 const char *cwid = (menu_id == MENU_CWID1) ? cwid1_m : cwid2_m;
                 const char *pPrintStr = cwid[0] ? cwid : "--";
                 UI_PrintString(pPrintStr, menu_item_x1, menu_item_x2, 2, 8);

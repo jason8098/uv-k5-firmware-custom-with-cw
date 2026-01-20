@@ -111,14 +111,7 @@ static void SETTINGS_LoadMorse(void)
         morse_wpm = data[EEPROM_MORSE_WPM_OFFSET];
     }
 
-    if (data[EEPROM_MORSE_EFF_WPM_OFFSET] < MORSE_EFF_WPM_MIN ||
-        data[EEPROM_MORSE_EFF_WPM_OFFSET] > MORSE_EFF_WPM_MAX) {
-        morse_wpm_effective = MORSE_EFF_WPM_DEFAULT;
-    } else {
-        morse_wpm_effective = data[EEPROM_MORSE_EFF_WPM_OFFSET];
-    }
-    if (morse_wpm_effective > morse_wpm)
-        morse_wpm_effective = morse_wpm;
+    morse_wpm_effective = morse_wpm;
 
     {
         const uint16_t tone_hz =
@@ -161,17 +154,13 @@ static void SETTINGS_SaveMorse(void)
     uint8_t data[EEPROM_MORSE_SIZE];
     size_t len;
     uint8_t wpm = morse_wpm;
-    uint8_t eff_wpm = morse_wpm_effective;
+    uint8_t eff_wpm = morse_wpm;
     uint16_t stop_ms = morse_stop_interval_ms;
     uint16_t beep_ms = morse_beep_ms;
     uint16_t tone_hz = morse_tone_hz;
 
     if (wpm < MORSE_WPM_MIN || wpm > MORSE_WPM_MAX)
         wpm = MORSE_WPM_DEFAULT;
-    if (eff_wpm < MORSE_EFF_WPM_MIN || eff_wpm > MORSE_EFF_WPM_MAX)
-        eff_wpm = MORSE_EFF_WPM_DEFAULT;
-    if (eff_wpm > wpm)
-        eff_wpm = wpm;
     if (tone_hz < MORSE_TONE_HZ_MIN || tone_hz > MORSE_TONE_HZ_MAX)
         tone_hz = MORSE_TONE_HZ_DEFAULT;
     if (beep_ms > MORSE_BEEP_INTERVAL_MAX_MS)

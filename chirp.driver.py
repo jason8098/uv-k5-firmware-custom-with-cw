@@ -1105,8 +1105,7 @@ def _build_morse_block(radio):
             except: return None
 
         wpm = min_max_def(_get_int(mem.morse.morse_wpm, MORSE_WPM_DEFAULT), MORSE_WPM_MIN, MORSE_WPM_MAX, MORSE_WPM_DEFAULT)
-        eff_wpm = min_max_def(_get_int(mem.morse.morse_eff_wpm, MORSE_EFF_WPM_DEFAULT), MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, MORSE_EFF_WPM_DEFAULT)
-        if eff_wpm > wpm: eff_wpm = wpm
+        eff_wpm = wpm
         stop_ms = min_max_def(_get_int(mem.morse.morse_stop_ms, MORSE_STOP_INTERVAL_DEFAULT_MS), MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS, MORSE_STOP_INTERVAL_DEFAULT_MS)
         beep_ms = min_max_def(_get_int(mem.morse.morse_beep_ms, MORSE_BEEP_INTERVAL_DEFAULT_MS), MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS, MORSE_BEEP_INTERVAL_DEFAULT_MS)
         tone_hz = min_max_def(_get_int(mem.morse.morse_tone_hz, MORSE_TONE_HZ_DEFAULT), MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, MORSE_TONE_HZ_DEFAULT)
@@ -1757,8 +1756,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 
             elif elname == "morse_wpm":
                 _mem.morse.morse_wpm = int(element.value)
-
-            elif elname == "morse_eff_wpm":
                 _mem.morse.morse_eff_wpm = int(element.value)
 
             elif elname == "morse_stop_ms":
@@ -2277,12 +2274,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         cw_wpm_setting.set_doc('CW WPM: Keying speed in words per minute')
         cw.append(cw_wpm_setting)
 
-        eff_wpm = min_max_def(_get_int(_mem.morse.morse_eff_wpm, MORSE_EFF_WPM_DEFAULT), MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, MORSE_EFF_WPM_DEFAULT)
-        if eff_wpm > wpm: eff_wpm = wpm
-        val = RadioSettingValueInteger(MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, eff_wpm)
-        cw_eff_wpm_setting = RadioSetting("morse_eff_wpm", "CW Effective Speed (WPM)", val)
-        cw_eff_wpm_setting.set_doc('CW Effective WPM: Must be less than or equal to CW Speed')
-        cw.append(cw_eff_wpm_setting)
 
         tone_hz = min_max_def(_get_int(_mem.morse.morse_tone_hz, MORSE_TONE_HZ_DEFAULT), MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, MORSE_TONE_HZ_DEFAULT)
         val = RadioSettingValueInteger(MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, tone_hz, MORSE_TONE_HZ_STEP)

@@ -46,7 +46,6 @@ const t_menu_item MenuList[] =
     {"CWID1",       MENU_CWID1         },
     {"CWID2",       MENU_CWID2         },
     {"CW WPM",      MENU_CW_WPM        },
-    {"CW Eff",      MENU_CW_EFF        },
     {"CWTone",      MENU_CW_TONE       },
     {"CWBeep",      MENU_CW_BEEP       },
     {"CWInt",       MENU_CW_INT        },
@@ -1024,10 +1023,6 @@ void UI_DisplayMenu(void)
         }
 
         case MENU_CW_WPM:
-            sprintf(String, "%u WPM", gSubMenuSelection);
-            break;
-
-        case MENU_CW_EFF:
             sprintf(String, "%u WPM", gSubMenuSelection);
             break;
 

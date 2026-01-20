@@ -36,6 +36,22 @@ uint16_t morse_tone_hz = MORSE_TONE_HZ_DEFAULT;
 #define MORSE_PARIS_ELEMENT_UNITS 31u
 #define MORSE_PARIS_GAP_UNITS     19u
 
+static uint16_t MORSE_ScaleToneHz(uint16_t freq)
+{
+    return (((uint32_t)freq * 1353245u) + (1u << 16)) >> 17;
+}
+
+static void MORSE_PrepareToneNoBeep(uint16_t freq)
+{
+    BK4819_EnterTxMute();
+    BK4819_WriteRegister(BK4819_REG_70,
+        BK4819_REG_70_MASK_ENABLE_TONE1 |
+        (66u << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
+    BK4819_WriteRegister(BK4819_REG_71, MORSE_ScaleToneHz(freq));
+    BK4819_SetAF(BK4819_AF_MUTE);
+    BK4819_EnableTXLink();
+}
+
 static uint16_t MORSE_GetDotMs(void)
 {
     uint8_t wpm = morse_wpm;
@@ -235,22 +251,27 @@ void TransmitMorse(const char *text) {
         const uint16_t letter_gap_ms_u16 = (uint16_t)(gap_unit_ms * 3u);
         const uint16_t word_gap_ms_u16 = (uint16_t)(gap_unit_ms * 7u);
         
-        BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
-        BK4819_TransmitTone(false, morse_tone_hz);
-        
-        txstatus=2;
-        UI_DisplayMORSE();
-        morseDelay(morse_beep_ms);
-        BK4819_EnterTxMute();
-        BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
-        if (txstatus == 0) {
+        if (morse_beep_ms > 0) {
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, true);
+            BK4819_TransmitTone(false, morse_tone_hz);
+
+            txstatus=2;
             UI_DisplayMORSE();
-            return;
-        }
-        morseDelay(letter_gap_ms_u16);
-        if (txstatus == 0) {
-            UI_DisplayMORSE();
-            return;
+            morseDelay(morse_beep_ms);
+            BK4819_EnterTxMute();
+            BK4819_ToggleGpioOut(BK4819_GPIO5_PIN1_RED, false);
+            if (txstatus == 0) {
+                UI_DisplayMORSE();
+                return;
+            }
+            morseDelay(letter_gap_ms_u16);
+            if (txstatus == 0) {
+                UI_DisplayMORSE();
+                return;
+            }
+        } else {
+            // Configure the tone generator without the BK4819_TransmitTone unmute delay.
+            MORSE_PrepareToneNoBeep(morse_tone_hz);
         }
         txstatus=1;
         UI_DisplayMORSE();

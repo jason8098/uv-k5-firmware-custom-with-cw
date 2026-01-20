@@ -26,14 +26,22 @@ bool txen = false;
 char cwid1_m[MORSE_CWID_PART_LEN + 1] = MORSE_CWID_DEFAULT;
 char cwid2_m[MORSE_CWID_PART_LEN + 1] = "";
 
+static size_t MORSE_Strnlen(const char *s, size_t max_len)
+{
+    size_t len = 0;
+    while (len < max_len && s[len] != 0)
+        len++;
+    return len;
+}
+
 const char *MORSE_GetCombinedCwid(void)
 {
     static char combined[MORSE_CWID_TOTAL_LEN + 1];
     size_t len1;
     size_t len2;
 
-    len1 = strnlen(cwid1_m, MORSE_CWID_PART_LEN);
-    len2 = strnlen(cwid2_m, MORSE_CWID_PART_LEN);
+    len1 = MORSE_Strnlen(cwid1_m, MORSE_CWID_PART_LEN);
+    len2 = MORSE_Strnlen(cwid2_m, MORSE_CWID_PART_LEN);
 
     while (len1 > 0 && cwid1_m[len1 - 1] == ' ')
         len1--;

@@ -816,6 +816,7 @@ void MENU_AcceptSetting(void)
         case MENU_CWID2:
             {
             const int cwid_max = (int)MORSE_CWID_PART_LEN;
+            const uint8_t menu_id = UI_MENU_GetCurrentMenuId();
             char *target = (menu_id == MENU_CWID1) ? cwid1_m : cwid2_m;
 
             for (int i = cwid_max - 1; i >= 0; i--) {

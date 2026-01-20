@@ -130,10 +130,10 @@ DEBUG_SHOW_OBFUSCATED_COMMANDS = False
 DEBUG_SHOW_MEMORY_ACTIONS = False
 
 # TODO: remove the driver version when it's in mainline chirp 
-DRIVER_VERSION = "Quansheng UV-K5/K6/5R driver ver: 2025/02/22 (c) EGZUMER + F4HWN v4.0.0"
-FIRMWARE_VERSION_UPDATE = "https://github.com/armel/uv-k5-firmware-custom/releases"
+DRIVER_VERSION = "Quansheng UV-K5/K6/5R driver ver: 2025/02/22 (c) EGZUMER + F4HWN v4.0.0 + K5CW 1.1.0"
+FIRMWARE_VERSION_UPDATE = "https://github.com/jason8098/uv-k5-firmware-custom-with-cw/releases"
 
-CHIRP_DRIVER_VERSION_UPDATE = "https://github.com/armel/uv-k5-chirp-driver/releases"
+CHIRP_DRIVER_VERSION_UPDATE = "https://github.com/jason8098/uv-k5-firmware-custom-with-cw/releases"
 
 CHAINE_F4HWN = "https://www.youtube.com/@f4hwn" 
 
@@ -1056,9 +1056,9 @@ def list_def(value, lst, default):
 
 @directory.register
 class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
-    """Quansheng UV-K5 (egzumer + f4hwn)"""
+    """Quansheng UV-K5 (egzumer + k5cw)"""
     VENDOR = "Quansheng"
-    MODEL = "UV-K5 (egzumer + f4hwn)"
+    MODEL = "UV-K5 (egzumer + k5cw)"
     BAUD_RATE = 38400
     NEEDS_COMPAT_SERIAL = False
     FIRMWARE_VERSION = ""

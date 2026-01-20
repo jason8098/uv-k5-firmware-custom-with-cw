@@ -54,6 +54,8 @@ static uint8_t MAIN_GetStepDecimals(uint16_t step)
     return 5;
 }
 
+static const uint8_t key_input_timeout_vfo_500ms = 10000 / 500;
+
 static void processFKeyFunction(const KEY_Code_t Key, const bool beep)
 {
     uint8_t Vfo = gEeprom.TX_VFO;
@@ -447,7 +449,7 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
                 return;
             }
             
-            gKeyInputCountdown = (gInputBoxIndex == totalDigits) ? (key_input_timeout_500ms / 16) : (key_input_timeout_500ms / 3);
+            gKeyInputCountdown = key_input_timeout_vfo_500ms;
 
             const char *inputStr = INPUTBOX_GetAscii();
             uint8_t inputLength = gInputBoxIndex;
@@ -503,10 +505,17 @@ static void MAIN_Key_DIGITS(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
             gTxVfo->freq_config_RX.Frequency = Frequency;
             if (confirm_on_extra) {
-                gInputBoxIndex = 0;
-                gKeyInputCountdown = 0;
-                gUpdateDisplay = true;
-                APP_FrequencyInputCommit();
+                if (APP_FrequencyInputIsValidComplete()) {
+                    gInputBoxIndex = 0;
+                    gKeyInputCountdown = 0;
+                    gUpdateDisplay = true;
+                    APP_FrequencyInputCommit();
+                } else {
+                    APP_FrequencyInputCancel();
+                    gInputBoxIndex = 0;
+                    gKeyInputCountdown = 0;
+                    gUpdateDisplay = true;
+                }
             }
 
             gRequestSaveChannel = 1;
@@ -685,11 +694,13 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
     }
 
     if (!bKeyPressed && !gDTMF_InputMode) { // menu key released
-        const bool bFlag = !gInputBoxIndex;
-        gInputBoxIndex   = 0;
-        APP_FrequencyInputCommit();
+        const bool hadInput = gInputBoxIndex > 0;
+        const bool freqInput = hadInput && IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE);
+        const bool freqValid = freqInput && APP_FrequencyInputIsValidComplete();
 
-        if (bFlag) {
+        gInputBoxIndex = 0;
+
+        if (!hadInput) {
             if (gScanStateDir != SCAN_OFF) {
                 CHFRSCANNER_Stop();
                 return;
@@ -710,6 +721,16 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
             #endif
         }
         else {
+            if (freqInput) {
+                if (freqValid) {
+                    APP_FrequencyInputCommit();
+                } else {
+                    APP_FrequencyInputCancel();
+                    gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+                }
+            } else {
+                APP_FrequencyInputCommit();
+            }
             gRequestDisplayScreen = DISPLAY_MAIN;
         }
     }

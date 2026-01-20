@@ -1519,7 +1519,7 @@ void cancelUserInputModes(void)
         gBeepToPlay         = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
         gUpdateStatus       = true;
         gUpdateDisplay      = true;
-        APP_FrequencyInputCommit();
+        APP_FrequencyInputCancel();
     }
 }
 
@@ -1534,6 +1534,42 @@ void APP_FrequencyInputStart(void)
     gFrequencyInputStartBand = gTxVfo->Band;
     gFrequencyInputStartScreenChannel = gEeprom.ScreenChannel[vfo];
     gFrequencyInputStartFreqChannel = gEeprom.FreqChannel[vfo];
+}
+
+bool APP_FrequencyInputIsValidComplete(void)
+{
+    if (!gFrequencyInputActive || gInputBoxIndex == 0)
+        return false;
+
+    if (!IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE))
+        return false;
+
+    const uint8_t digitsBefore = (gFrequencyInputStartFrequency >= _1GHz_in_KHz) ? 4 : 3;
+    const uint8_t totalDigits = digitsBefore + 3;
+    if (gInputBoxIndex < totalDigits)
+        return false;
+
+    const char *inputStr = INPUTBOX_GetAscii();
+    uint8_t inputLength = gInputBoxIndex;
+    uint8_t decimalsInput = (inputLength > digitsBefore) ? (inputLength - digitsBefore) : 0;
+    uint8_t decimalsTarget = (decimalsInput < 3) ? 3 : decimalsInput;
+    if (decimalsTarget > 5)
+        decimalsTarget = 5;
+
+    uint64_t inputFreq = StrToUL(inputStr);
+    for (uint8_t i = decimalsInput; i < decimalsTarget; i++)
+        inputFreq *= 10u;
+    for (uint8_t i = 0; i < (5u - decimalsTarget); i++)
+        inputFreq *= 10u;
+
+    uint32_t rawFrequency = (inputFreq > 0xFFFFFFFFu) ? 0xFFFFFFFFu : (uint32_t)inputFreq;
+    if (rawFrequency == 0)
+        return false;
+
+    if (RX_freq_check(rawFrequency) < 0)
+        return false;
+
+    return true;
 }
 
 void APP_FrequencyInputCommit(void)
@@ -1579,6 +1615,7 @@ void APP_TimeSlice500ms(void)
     {
         if (--gKeyInputCountdown == 0)
         {
+            bool handled_freq = false;
 
             if (IS_MR_CHANNEL(gTxVfo->CHANNEL_SAVE) && (gInputBoxIndex == 1 || gInputBoxIndex == 2))
             {
@@ -1591,7 +1628,22 @@ void APP_TimeSlice500ms(void)
                 SETTINGS_SaveVfoIndices();
             }
 
-            cancelUserInputModes();
+            if (gInputBoxIndex > 0 && IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE)) {
+                if (APP_FrequencyInputIsValidComplete()) {
+                    APP_FrequencyInputCommit();
+                } else {
+                    APP_FrequencyInputCancel();
+                    gBeepToPlay = BEEP_500HZ_60MS_DOUBLE_BEEP_OPTIONAL;
+                }
+                gInputBoxIndex = 0;
+                gKeyInputCountdown = 0;
+                gUpdateStatus = true;
+                gUpdateDisplay = true;
+                handled_freq = true;
+            }
+
+            if (!handled_freq)
+                cancelUserInputModes();
         }
     }
 

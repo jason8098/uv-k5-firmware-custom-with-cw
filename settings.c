@@ -38,6 +38,14 @@
 #define EEPROM_MORSE_BEEP_MS_OFFSET 24u
 #define EEPROM_MORSE_TONE_HZ_OFFSET 26u
 
+static size_t SETTINGS_Strnlen(const char *s, size_t max_len)
+{
+    size_t len = 0;
+    while (len < max_len && s[len] != 0)
+        len++;
+    return len;
+}
+
 #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
 static const uint32_t gDefaultFrequencyTable[] =
 {
@@ -169,12 +177,12 @@ static void SETTINGS_SaveMorse(void)
         stop_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
 
     memset(data, 0xFF, sizeof(data));
-    len = strnlen(cwid1_m, MORSE_CWID_PART_LEN);
+    len = SETTINGS_Strnlen(cwid1_m, MORSE_CWID_PART_LEN);
     if (len > MORSE_CWID_PART_LEN)
         len = MORSE_CWID_PART_LEN;
     memcpy(data + EEPROM_MORSE_CWID1_OFFSET, cwid1_m, len);
 
-    len = strnlen(cwid2_m, MORSE_CWID_PART_LEN);
+    len = SETTINGS_Strnlen(cwid2_m, MORSE_CWID_PART_LEN);
     if (len > MORSE_CWID_PART_LEN)
         len = MORSE_CWID_PART_LEN;
     memcpy(data + EEPROM_MORSE_CWID2_OFFSET, cwid2_m, len);

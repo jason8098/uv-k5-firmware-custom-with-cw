@@ -23,15 +23,20 @@ void UI_DisplayMORSE(void)
     snprintf_(String, sizeof(String), "FOX TX v%s", morseVersion);
     pPrintStr = String;
     UI_PrintStringSmallBold(pPrintStr, 0, 0, 0);
-    snprintf_(String, sizeof(String), "CW: %s", MORSE_GetCombinedCwid());
-    pPrintStr = String;
-    UI_PrintStringSmallBold(String, 0, 0, 1);
+    {
+        const char *cwid1 = cwid1_m[0] ? cwid1_m : "--";
+        const char *cwid2 = cwid2_m[0] ? cwid2_m : "--";
+        snprintf_(String, sizeof(String), "CW1: %s", cwid1);
+        UI_PrintStringSmallBold(String, 0, 0, 1);
+        snprintf_(String, sizeof(String), "CW2: %s", cwid2);
+        UI_PrintStringSmallBold(String, 0, 0, 2);
+    }
 
     if (morse_wpm_effective != morse_wpm)
         snprintf_(String, sizeof(String), "WPM: %u/%u", morse_wpm, morse_wpm_effective);
     else
         snprintf_(String, sizeof(String), "WPM: %u", morse_wpm);
-    UI_PrintStringSmallBold(String, 0, 0, 2);
+    UI_PrintStringSmallBold(String, 0, 0, 3);
 
     {
         uint16_t tenths_left = 0;
@@ -39,7 +44,7 @@ void UI_DisplayMORSE(void)
             tenths_left = (gCustomCountdown_10ms + 9u) / 10u;
 
         if(txstatus==1){
-            UI_PrintStringSmallBold("STATUS: TX CWID", 0, 0, 3);
+            UI_PrintStringSmallBold("STATUS: TX CWID", 0, 0, 4);
         }else if(txstatus==2){
             if (tenths_left > 0) {
                 const uint16_t seconds = tenths_left / 10u;
@@ -48,7 +53,7 @@ void UI_DisplayMORSE(void)
             } else {
                 snprintf_(String, sizeof(String), "STATUS: TONE 0.0s");
             }
-            UI_PrintStringSmallBold(String, 0, 0, 3);
+            UI_PrintStringSmallBold(String, 0, 0, 4);
         }else if(txstatus==3){
             if (tenths_left > 0) {
                 const uint16_t seconds = tenths_left / 10u;
@@ -57,10 +62,10 @@ void UI_DisplayMORSE(void)
             } else {
                 snprintf_(String, sizeof(String), "STATUS: WAIT 0.0s");
             }
-            UI_PrintStringSmallBold(String, 0, 0, 3);
+            UI_PrintStringSmallBold(String, 0, 0, 4);
         }
         else{
-            UI_PrintStringSmallBold("STATUS: QRV", 0, 0, 3);
+            UI_PrintStringSmallBold("STATUS: QRV", 0, 0, 4);
         }
     }
     uint32_t frequency = gTxVfo->pTX->Frequency;
@@ -69,7 +74,7 @@ void UI_DisplayMORSE(void)
 
     snprintf_(String, sizeof(String), "FREQ: %u.%uMHz", mhz, khz);
     pPrintStr = String;
-    UI_PrintStringSmallBold(pPrintStr, 0, 0, 4);
+    UI_PrintStringSmallBold(pPrintStr, 0, 0, 5);
     
 
     char* pw;
@@ -97,7 +102,7 @@ void UI_DisplayMORSE(void)
     }
     snprintf_(String, sizeof(String), "PW: %s", pw);
     pPrintStr = String;
-    UI_PrintStringSmallBold(pPrintStr, 0, 0, 5);
+    UI_PrintStringSmallBold(pPrintStr, 0, 0, 6);
     ST7565_BlitFullScreen();
 
     

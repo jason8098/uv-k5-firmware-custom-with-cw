@@ -130,7 +130,7 @@ DEBUG_SHOW_OBFUSCATED_COMMANDS = False
 DEBUG_SHOW_MEMORY_ACTIONS = False
 
 # TODO: remove the driver version when it's in mainline chirp 
-DRIVER_VERSION = "Quansheng UV-K5/K6/5R driver ver: 2025/02/22 (c) EGZUMER + F4HWN v4.0.0 + K5CW 1.1.0"
+DRIVER_VERSION = "Quansheng UV-K5/K6/5R driver ver: 2026/01/20 (c) EGZUMER + F4HWN v4.0.0 + K5CW 1.1.0 + CWID1/2 EEPROM fix"
 FIRMWARE_VERSION_UPDATE = "https://github.com/jason8098/uv-k5-firmware-custom-with-cw/releases"
 
 CHIRP_DRIVER_VERSION_UPDATE = "https://github.com/jason8098/uv-k5-firmware-custom-with-cw/releases"
@@ -420,19 +420,16 @@ struct {
 } cal;
 
 
-#seekto 0x1FD8;
+#seekto 0x1FD0;
 struct {
-    ul16 morse_tone_hz;
-    u8 __UNUSED_MORSE_EXTRA[6];
-} morse_extra;
-
-#seekto 0x1FE0;
-struct {
-    char cwid[10];
+    char cwid1[10];
+    char cwid2[10];
     u8 morse_wpm;
     ul16 morse_stop_ms;
     u8 morse_eff_wpm;
     ul16 morse_beep_ms;
+    ul16 morse_tone_hz;
+    u8 __UNUSED_MORSE[4];
 } morse;
 
 
@@ -693,6 +690,8 @@ PROG_SIZE = 0x1d00  # size of the memory that we will write
 MEM_BLOCK = 0x80  # largest block of memory that we can reliably write
 CAL_START = 0x1E00  # calibration memory start address
 F4HWN_START =0x1FF2 # calibration F4HWN memory start address
+MORSE_START = 0x1FD0
+MORSE_SIZE = 0x20
 
 # fm radio supported frequencies
 FMMIN = 76.0
@@ -754,8 +753,9 @@ KEYACTIONS_LIST = ["NONE",
                    "REMOVE OFFSET"
                   ]
 
-MORSE_CWID_MAX_LEN = 10
 MORSE_CWID_PART_LEN = 10
+MORSE_CWID_MAX_LEN = 20
+MORSE_CWID_TOTAL_LEN = 20
 MORSE_CWID_DEFAULT = "DE N0CALL"
 MORSE_WPM_DEFAULT = 15
 MORSE_WPM_MIN = 5
@@ -1026,6 +1026,9 @@ def do_upload(radio):
         mstep += 1 # go to next step
                     
         if mstep == 1:   # if the first write mem done , pass to f4hwn value
+            morse_data = radio.get_mmap()[MORSE_START:MORSE_START + MORSE_SIZE]
+            _writemem(serport, morse_data, MORSE_START)
+
             status.max = MEM_SIZE-F4HWN_START
             start_addr = F4HWN_START
             stop_addr = MEM_SIZE
@@ -1678,7 +1681,7 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
                     _mem.morse.morse_eff_wpm = int(element.value)
 
                 elif elname == "cw_tone_hz":
-                    _mem.morse_extra.morse_tone_hz = int(element.value)
+                    _mem.morse.morse_tone_hz = int(element.value)
 
                 elif elname == "cw_beep_ms":
                     _mem.morse.morse_beep_ms = int(element.value)
@@ -1917,17 +1920,16 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
                 if self._cw_settings_pending:
                     cwid1 = str(self._cw_settings_pending.get("cwid_1", "")).strip()
                     cwid2 = str(self._cw_settings_pending.get("cwid_2", "")).strip()
-                    combined = ""
-                    if cwid1:
-                        combined += cwid1
-                    if cwid2:
-                        combined += cwid2
-                    if not combined:
+                    if not cwid1 and not cwid2:
                         raise InvalidValueError(
                             "CWID is blank. Please enter at least 1 character.")
-                    combined = combined[:MORSE_CWID_MAX_LEN]
-                    padded = (combined + ("\xFF" * MORSE_CWID_MAX_LEN))[:MORSE_CWID_MAX_LEN]
-                    _mem.morse.cwid = padded
+
+                    def _pad_cwid(value):
+                        value = value[:MORSE_CWID_PART_LEN]
+                        return (value + ("\xFF" * MORSE_CWID_PART_LEN))[:MORSE_CWID_PART_LEN]
+
+                    _mem.morse.cwid1 = _pad_cwid(cwid1)
+                    _mem.morse.cwid2 = _pad_cwid(cwid2)
 
                 if _mem.morse.morse_eff_wpm > _mem.morse.morse_wpm:
                     _mem.morse.morse_eff_wpm = _mem.morse.morse_wpm
@@ -2092,13 +2094,12 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 
         # ----------------- CW/Morse settings
 
-        cwid = str(_mem.morse.cwid).strip("\x00\xff")
-        if len(cwid) > MORSE_CWID_MAX_LEN:
-            cwid = cwid[:MORSE_CWID_MAX_LEN]
-        if not cwid.strip():
-            cwid = ""
-        cwid_1 = cwid[:MORSE_CWID_PART_LEN]
-        cwid_2 = cwid[MORSE_CWID_PART_LEN:]
+        cwid_1 = str(_mem.morse.cwid1).strip("\x00\xff")
+        cwid_2 = str(_mem.morse.cwid2).strip("\x00\xff")
+        if not cwid_1.strip():
+            cwid_1 = ""
+        if not cwid_2.strip():
+            cwid_2 = ""
 
         val = RadioSettingValueString(0, MORSE_CWID_PART_LEN, cwid_1)
         val.set_charset(chirp_common.CHARSET_ASCII)
@@ -2128,7 +2129,7 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         cw_eff_wpm_setting.set_doc('CW Effective WPM: Must be less than or equal to CW Speed')
         cw.append(cw_eff_wpm_setting)
 
-        morse_tone_hz = min_max_def(_mem.morse_extra.morse_tone_hz, MORSE_TONE_HZ_MIN,
+        morse_tone_hz = min_max_def(_mem.morse.morse_tone_hz, MORSE_TONE_HZ_MIN,
                                     MORSE_TONE_HZ_MAX, MORSE_TONE_HZ_DEFAULT)
         val = RadioSettingValueInteger(MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, morse_tone_hz,
                                        MORSE_TONE_HZ_STEP)

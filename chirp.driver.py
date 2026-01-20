@@ -104,6 +104,9 @@
 #4.0.0:
 #       add MUTE action
 
+#4.1.0:
+#       add support for Game special version
+
 import webbrowser
 import os
 
@@ -120,6 +123,67 @@ from chirp.settings import RadioSetting, RadioSettingGroup, \
 
 LOG = logging.getLogger(__name__)
 
+# Morse/CW settings (EEPROM)
+MORSE_CWID_PART_LEN = 10
+MORSE_CWID_TOTAL_LEN = 20
+MORSE_WPM_DEFAULT = 15
+MORSE_WPM_MIN = 5
+MORSE_WPM_MAX = 30
+MORSE_EFF_WPM_DEFAULT = MORSE_WPM_DEFAULT
+MORSE_EFF_WPM_MIN = MORSE_WPM_MIN
+MORSE_EFF_WPM_MAX = MORSE_WPM_MAX
+MORSE_STOP_INTERVAL_DEFAULT_MS = 45000
+MORSE_STOP_INTERVAL_MIN_MS = 1000
+MORSE_STOP_INTERVAL_MAX_MS = 60000
+MORSE_BEEP_INTERVAL_DEFAULT_MS = 7500
+MORSE_BEEP_INTERVAL_MIN_MS = 0
+MORSE_BEEP_INTERVAL_MAX_MS = 30000
+MORSE_BEEP_INTERVAL_STEP_MS = 100
+MORSE_TONE_HZ_DEFAULT = 600
+MORSE_TONE_HZ_MIN = 300
+MORSE_TONE_HZ_MAX = 1200
+MORSE_TONE_HZ_STEP = 10
+MORSE_START = 0x1FD0
+MORSE_SIZE = 32
+
+# Memory layout constants
+MEM_SIZE = 0x2000
+MEM_BLOCK = 0x40
+CAL_START = 0x1E00
+F4HWN_START = MORSE_START
+PROG_SIZE = F4HWN_START
+
+# Recovered core constants
+KEYACTIONS_LIST = ['NONE', 'FLASHLIGHT', 'POWER', 'MONITOR', 'SCAN', 'Voice detection (VOX)', 'ALARM', 'FM RADIO', '1750Hz TONE', 'LOCK KEYPAD', 'Main VFO (VFO A / VFO B)', 'Frequency/memory mode (VFO / MEM)', 'MODE', 'Put the backlight OFF temporarily (BL_MIN_TMP_OFF)', 'Change RxMode: *Main only,*Dual RX,*Cross Band,*TX Dual RX (RX MODE)', 'MAIN ONLY', 'Toggle CLASSIC to ONE PUSH ptt (PTT)', 'WIDE / NARROW', 'BACKLIGHT', 'MUTE', 'POWER HIGH', 'REMOVE OFFSET']
+DTMF_CODE_CHARS = 'ABCD*# '
+DTMF_CHARS_ID = '0123456789ABCDabcd'
+DTMF_CHARS_UPDOWN = '0123456789ABCDabcd#* '
+DTMF_CHARS_KILL = '0123456789ABCDabcd'
+DTMF_DECODE_RESPONSE_LIST = ['DO NOTHING', 'Local ringing (RING)', 'Replay response (REPLY)', 'Local ringing + reply response (BOTH)']
+BANDS_WIDE = {0: [18.0, 108.0], 1: [108.0, 136.9999], 2: [137.0, 173.9999], 3: [174.0, 349.9999], 4: [350.0, 399.9999], 5: [400.0, 469.9999], 6: [470.0, 1300.0]}
+BANDS_STANDARD = {0: [50.0, 76.0], 1: [108.0, 136.9999], 2: [137.0, 173.9999], 3: [174.0, 349.9999], 4: [350.0, 399.9999], 5: [400.0, 469.9999], 6: [470.0, 600.0]}
+DTCS_CODES = [23, 25, 26, 31, 32, 36, 43, 47, 51, 53, 54, 65, 71, 72, 73, 74, 114, 115, 116, 122, 125, 131, 132, 134, 143, 145, 152, 155, 156, 162, 165, 172, 174, 205, 212, 223, 225, 226, 243, 244, 245, 246, 251, 252, 255, 261, 263, 265, 266, 271, 274, 306, 311, 315, 325, 331, 332, 343, 346, 351, 356, 364, 365, 371, 411, 412, 413, 423, 431, 432, 445, 446, 452, 454, 455, 462, 464, 465, 466, 503, 506, 516, 523, 526, 532, 546, 565, 606, 612, 624, 627, 631, 632, 654, 662, 664, 703, 712, 723, 731, 732, 734, 743, 754]
+CTCSS_TONES = [67.0, 69.3, 71.9, 74.4, 77.0, 79.7, 82.5, 85.4, 88.5, 91.5, 94.8, 97.4, 100.0, 103.5, 107.2, 110.9, 114.8, 118.8, 123.0, 127.3, 131.8, 136.5, 141.3, 146.2, 151.4, 156.7, 159.8, 162.2, 165.5, 167.9, 171.3, 173.8, 177.3, 179.9, 183.5, 186.2, 189.9, 192.8, 196.6, 199.5, 203.5, 206.5, 210.7, 218.1, 225.7, 229.1, 233.6, 241.8, 250.3, 254.1]
+TMODES = ['', 'Tone', 'DTCS', 'DTCS']
+STEPS = [2.5, 5, 6.25, 10, 12.5, 25, 8.33, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 1.25, 9, 15, 20, 30, 50, 100, 125, 200, 250, 500]
+SCANLIST_LIST = ['None ', 'List [1]', 'List [2]', 'List [1, 2]', 'List [3]', 'List [1, 3]', 'List [2, 3]', 'All List [1, 2, 3]']
+FMMIN = 76.0
+FMMAX = 108.0
+DTMF_CHARS = '0123456789ABCD*# '
+SCANLIST_SELECT_LIST = ['LIST [0] NO LIST ', 'LIST [1]', 'LIST [2]', 'LIST [3]', 'LISTS [1, 2, 3]', 'All Channel (ALL)']
+TX_VFO_LIST = ['A', 'B']
+MIC_GAIN_LIST = ['+1.1dB', '+4.0dB', '+8.0dB', '+12.0dB', '+15.1dB']
+WELCOME_LIST = ['Message line 1, Voltage, Sound (ALL)', 'Make 2 short sounds (SOUND)', 'User message line 1 and line 2 (MESSAGE)', 'Battery voltage (VOLTAGE)', 'NONE']
+BACKLIGHT_LVL_LIST = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+BACKLIGHT_TX_RX_LIST = ['OFF', 'TX', 'RX', 'TX/RX']
+ROGER_LIST = ['OFF', 'Roger beep (ROGER)', 'MDC data burst (MDC)']
+RTE_LIST = ['OFF', '100ms', '200ms', '300ms', '400ms', '500ms', '600ms', '700ms', '800ms', '900ms', '1000ms']
+VOX_LIST = ['OFF', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+SCANRESUME_LIST = ['STOP : Stop scan when a signal is received', 'CARRIER 00s:250ms : Listen for this time until the signal disappears', 'CARRIER 00s:500ms : Listen for this time until the signal disappears', 'CARRIER 00s:750ms : Listen for this time until the signal disappears', 'CARRIER 01s:000ms : Listen for this time until the signal disappears', 'CARRIER 01s:250ms : Listen for this time until the signal disappears', 'CARRIER 01s:500ms : Listen for this time until the signal disappears', 'CARRIER 01s:750ms : Listen for this time until the signal disappears', 'CARRIER 02s:000ms : Listen for this time until the signal disappears', 'CARRIER 02s:250ms : Listen for this time until the signal disappears', 'CARRIER 02s:500ms : Listen for this time until the signal disappears', 'CARRIER 02s:750ms : Listen for this time until the signal disappears', 'CARRIER 03s:000ms : Listen for this time until the signal disappears', 'CARRIER 03s:250ms : Listen for this time until the signal disappears', 'CARRIER 03s:500ms : Listen for this time until the signal disappears', 'CARRIER 03s:750ms : Listen for this time until the signal disappears', 'CARRIER 04s:000ms : Listen for this time until the signal disappears', 'CARRIER 04s:250ms : Listen for this time until the signal disappears', 'CARRIER 04s:500ms : Listen for this time until the signal disappears', 'CARRIER 04s:750ms : Listen for this time until the signal disappears', 'CARRIER 05s:000ms : Listen for this time until the signal disappears', 'CARRIER 05s:250ms : Listen for this time until the signal disappears', 'CARRIER 05s:500ms : Listen for this time until the signal disappears', 'CARRIER 05s:750ms : Listen for this time until the signal disappears', 'CARRIER 06s:000ms : Listen for this time until the signal disappears', 'CARRIER 06s:250ms : Listen for this time until the signal disappears', 'CARRIER 06s:500ms : Listen for this time until the signal disappears', 'CARRIER 06s:750ms : Listen for this time until the signal disappears', 'CARRIER 07s:000ms : Listen for this time until the signal disappears', 'CARRIER 07s:250ms : Listen for this time until the signal disappears', 'CARRIER 07s:500ms : Listen for this time until the signal disappears', 'CARRIER 07s:750ms : Listen for this time until the signal disappears', 'CARRIER 08s:000ms : Listen for this time until the signal disappears', 'CARRIER 08s:250ms : Listen for this time until the signal disappears', 'CARRIER 08s:500ms : Listen for this time until the signal disappears', 'CARRIER 08s:750ms : Listen for this time until the signal disappears', 'CARRIER 09s:000ms : Listen for this time until the signal disappears', 'CARRIER 09s:250ms : Listen for this time until the signal disappears', 'CARRIER 09s:500ms : Listen for this time until the signal disappears', 'CARRIER 09s:750ms : Listen for this time until the signal disappears', 'CARRIER 10s:000ms : Listen for this time until the signal disappears', 'CARRIER 10s:250ms : Listen for this time until the signal disappears', 'CARRIER 10s:500ms : Listen for this time until the signal disappears', 'CARRIER 10s:750ms : Listen for this time until the signal disappears', 'CARRIER 11s:000ms : Listen for this time until the signal disappears', 'CARRIER 11s:250ms : Listen for this time until the signal disappears', 'CARRIER 11s:500ms : Listen for this time until the signal disappears', 'CARRIER 11s:750ms : Listen for this time until the signal disappears', 'CARRIER 12s:000ms : Listen for this time until the signal disappears', 'CARRIER 12s:250ms : Listen for this time until the signal disappears', 'CARRIER 12s:500ms : Listen for this time until the signal disappears', 'CARRIER 12s:750ms : Listen for this time until the signal disappears', 'CARRIER 13s:000ms : Listen for this time until the signal disappears', 'CARRIER 13s:250ms : Listen for this time until the signal disappears', 'CARRIER 13s:500ms : Listen for this time until the signal disappears', 'CARRIER 13s:750ms : Listen for this time until the signal disappears', 'CARRIER 14s:000ms : Listen for this time until the signal disappears', 'CARRIER 14s:250ms : Listen for this time until the signal disappears', 'CARRIER 14s:500ms : Listen for this time until the signal disappears', 'CARRIER 14s:750ms : Listen for this time until the signal disappears', 'CARRIER 15s:000ms : Listen for this time until the signal disappears', 'CARRIER 15s:250ms : Listen for this time until the signal disappears', 'CARRIER 15s:500ms : Listen for this time until the signal disappears', 'CARRIER 15s:750ms : Listen for this time until the signal disappears', 'CARRIER 16s:000ms : Listen for this time until the signal disappears', 'CARRIER 16s:250ms : Listen for this time until the signal disappears', 'CARRIER 16s:500ms : Listen for this time until the signal disappears', 'CARRIER 16s:750ms : Listen for this time until the signal disappears', 'CARRIER 17s:000ms : Listen for this time until the signal disappears', 'CARRIER 17s:250ms : Listen for this time until the signal disappears', 'CARRIER 17s:500ms : Listen for this time until the signal disappears', 'CARRIER 17s:750ms : Listen for this time until the signal disappears', 'CARRIER 18s:000ms : Listen for this time until the signal disappears', 'CARRIER 18s:250ms : Listen for this time until the signal disappears', 'CARRIER 18s:500ms : Listen for this time until the signal disappears', 'CARRIER 18s:750ms : Listen for this time until the signal disappears', 'CARRIER 19s:000ms : Listen for this time until the signal disappears', 'CARRIER 19s:250ms : Listen for this time until the signal disappears', 'CARRIER 19s:500ms : Listen for this time until the signal disappears', 'CARRIER 19s:750ms : Listen for this time until the signal disappears', 'CARRIER 20s:000ms : Listen for this time until the signal disappears', 'TIMEOUT 00m:05s : Listen for this time and resume', 'TIMEOUT 00m:10s : Listen for this time and resume', 'TIMEOUT 00m:15s : Listen for this time and resume', 'TIMEOUT 00m:20s : Listen for this time and resume', 'TIMEOUT 00m:25s : Listen for this time and resume', 'TIMEOUT 00m:30s : Listen for this time and resume', 'TIMEOUT 00m:35s : Listen for this time and resume', 'TIMEOUT 00m:40s : Listen for this time and resume', 'TIMEOUT 00m:45s : Listen for this time and resume', 'TIMEOUT 00m:50s : Listen for this time and resume', 'TIMEOUT 00m:55s : Listen for this time and resume', 'TIMEOUT 01m:00s : Listen for this time and resume', 'TIMEOUT 01m:05s : Listen for this time and resume', 'TIMEOUT 01m:10s : Listen for this time and resume', 'TIMEOUT 01m:15s : Listen for this time and resume', 'TIMEOUT 01m:20s : Listen for this time and resume', 'TIMEOUT 01m:25s : Listen for this time and resume', 'TIMEOUT 01m:30s : Listen for this time and resume', 'TIMEOUT 01m:35s : Listen for this time and resume', 'TIMEOUT 01m:40s : Listen for this time and resume', 'TIMEOUT 01m:45s : Listen for this time and resume', 'TIMEOUT 01m:50s : Listen for this time and resume', 'TIMEOUT 01m:55s : Listen for this time and resume', 'TIMEOUT 02m:00s : Listen for this time and resume']
+VOICE_LIST = ['OFF', 'Chinese', 'English']
+ALARMMODE_LIST = ['SITE', 'TONE']
+FLOCK_LIST = ['DEFAULT+ (137-174, 400-470)', 'FCC HAM (144-148, 420-450)', 'CA HAM (144-148, 430-450)', 'CE HAM (144-146, 430-440)', 'GB HAM (144-148, 430-440)', '137-174, 400-430', '137-174, 400-438', 'PMR 446', 'GMRS FRS MURS', 'DISABLE ALL', 'UNLOCK ALL']
+
 # Show the obfuscated version of commands. Not needed normally, but
 # might be useful for someone who is debugging a similar radio
 DEBUG_SHOW_OBFUSCATED_COMMANDS = False
@@ -128,9 +192,7 @@ DEBUG_SHOW_OBFUSCATED_COMMANDS = False
 # this is the same information as in the packet hexdumps, but
 # might be useful for someone debugging some obscure memory issue
 DEBUG_SHOW_MEMORY_ACTIONS = False
-
-# TODO: remove the driver version when it's in mainline chirp 
-DRIVER_VERSION = "Quansheng UV-K5/K6/5R driver ver: 2026/01/20 (c) EGZUMER + F4HWN v4.0.0 + K5CW 1.1.0 + CWID1/2 EEPROM fix"
+DRIVER_VERSION = "Quansheng UV-K5/K6/5R driver ver: 2026/01/20 (c) EGZUMER + F4HWN v4.1.0 + K5CW 1.1.0"
 FIRMWARE_VERSION_UPDATE = "https://github.com/jason8098/uv-k5-firmware-custom-with-cw/releases"
 
 CHIRP_DRIVER_VERSION_UPDATE = "https://github.com/jason8098/uv-k5-firmware-custom-with-cw/releases"
@@ -447,7 +509,7 @@ u8 __UNUSED5:1,
    ENABLE_FEAT_F4HWN_RESCUE_OPS:1,
    ENABLE_BANDSCOPE:1,
    ENABLE_AM_FIX:1,
-   ENABLE_BLMIN_TMP_OFF:1,
+   ENABLE_FEAT_F4HWN_GAME:1,
    ENABLE_RAW_DEMODULATORS:1,
    ENABLE_WIDE_RX:1,
    ENABLE_FLASHLIGHT:1;
@@ -600,201 +662,240 @@ BACKLIGHT_LIST = ["OFF", "5 sec", "10 sec", "15 sec", "20 sec", "25 sec", "30 se
                   "2 min", "2 min : 5 sec", "2 min : 10 sec", "2 min : 15 sec", "2 min : 20 sec", "2 min : 25 sec", "2 min : 30 sec", "2 min : 35 sec", "2 min : 40 sec", "2 min : 45 sec", "2 min : 50 sec", "2 min : 55 sec", 
                   "3 min", "3 min : 5 sec", "3 min : 10 sec", "3 min : 15 sec", "3 min : 20 sec", "3 min : 25 sec", "3 min : 30 sec", "3 min : 35 sec", "3 min : 40 sec", "3 min : 45 sec", "3 min : 50 sec", "3 min : 55 sec", 
                   "4 min", "4 min : 5 sec", "4 min : 10 sec", "4 min : 15 sec", "4 min : 20 sec", "4 min : 25 sec", "4 min : 30 sec", "4 min : 35 sec", "4 min : 40 sec", "4 min : 45 sec", "4 min : 50 sec", "4 min : 55 sec",
-                  "5 min", "Always On (ON)"]
+                  "5 min", "5 min : 5 sec", "5 min : 10 sec", "5 min : 15 sec", "5 min : 20 sec", "5 min : 25 sec", "5 min : 30 sec", "5 min : 35 sec", "5 min : 40 sec", "5 min : 45 sec", "5 min : 50 sec", "5 min : 55 sec",
+                  "6 min", "6 min : 5 sec", "6 min : 10 sec", "6 min : 15 sec", "6 min : 20 sec", "6 min : 25 sec", "6 min : 30 sec", "6 min : 35 sec", "6 min : 40 sec", "6 min : 45 sec", "6 min : 50 sec", "6 min : 55 sec", 
+                  "7 min", "7 min : 5 sec", "7 min : 10 sec", "7 min : 15 sec", "7 min : 20 sec", "7 min : 25 sec", "7 min : 30 sec", "7 min : 35 sec", "7 min : 40 sec", "7 min : 45 sec", "7 min : 50 sec", "7 min : 55 sec", 
+                  "8 min", "8 min : 5 sec", "8 min : 10 sec", "8 min : 15 sec", "8 min : 20 sec", "8 min : 25 sec", "8 min : 30 sec", "8 min : 35 sec", "8 min : 40 sec", "8 min : 45 sec", "8 min : 50 sec", "8 min : 55 sec", 
+                  "9 min", "9 min : 5 sec", "9 min : 10 sec", "9 min : 15 sec", "9 min : 20 sec", "9 min : 25 sec", "9 min : 30 sec", "9 min : 35 sec", "9 min : 40 sec", "9 min : 45 sec", "9 min : 50 sec", "9 min : 55 sec",
+                  "10 min", "10 min : 5 sec", "10 min : 10 sec", "10 min : 15 sec", "10 min : 20 sec", "10 min : 25 sec", "10 min : 30 sec", "10 min : 35 sec", "10 min : 40 sec", "10 min : 45 sec", "10 min : 50 sec", "10 min : 55 sec",
+                  "11 min", "11 min : 5 sec", "11 min : 10 sec", "11 min : 15 sec", "11 min : 20 sec", "11 min : 25 sec", "11 min : 30 sec", "11 min : 35 sec", "11 min : 40 sec", "11 min : 45 sec", "11 min : 50 sec", "11 min : 55 sec", 
+                  "12 min", "12 min : 5 sec", "12 min : 10 sec", "12 min : 15 sec", "12 min : 20 sec", "12 min : 25 sec", "12 min : 30 sec", "12 min : 35 sec", "12 min : 40 sec", "12 min : 45 sec", "12 min : 50 sec", "12 min : 55 sec", 
+                  "13 min", "13 min : 5 sec", "13 min : 10 sec", "13 min : 15 sec", "13 min : 20 sec", "13 min : 25 sec", "13 min : 30 sec", "13 min : 35 sec", "13 min : 40 sec", "13 min : 45 sec", "13 min : 50 sec", "13 min : 55 sec", 
+                  "14 min", "14 min : 5 sec", "14 min : 10 sec", "14 min : 15 sec", "14 min : 20 sec", "14 min : 25 sec", "14 min : 30 sec", "14 min : 35 sec", "14 min : 40 sec", "14 min : 45 sec", "14 min : 50 sec", "14 min : 55 sec",
+                  "15 min"]
 
-# Backlight LVL
-BACKLIGHT_LVL_LIST = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+# Set NFM value
+SET_NFM_LIST = ["NARROW", "NARROWER"]
 
-# Backlight _TX_RX_LIST
-BACKLIGHT_TX_RX_LIST = ["OFF", "TX", "RX", "TX/RX"]
+# Set KEY value
+SET_KEY_LIST = ["MENU", "KEY_UP", "KEY_DOWN", "KEY_EXIT", "KEY_STAR"]
 
-# steps TODO: change order
-STEPS = [2.5, 5, 6.25, 10, 12.5, 25, 8.33, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 1.25,
-         9, 15, 20, 30, 50, 100, 125, 200, 250, 500]
+# Set Off timer 
+SET_OFF_TMR_LIST = ["OFF"]
 
-# ctcss/dcs codes
-TMODES = ["", "Tone", "DTCS", "DTCS"]
-TONE_NONE = 0
-TONE_CTCSS = 1
-TONE_DCS = 2
-TONE_RDCS = 3
+# Add values from 00h:01m to 02h:00m
+for h in range(2):  # From 0 to 2 hours
+    if h == 1:  # Add 01h:00m
+        SET_OFF_TMR_LIST.append(f"{h:d}h:00m")
+    for m in range(1, 60):  # From 1 to 59 minutes (start at 1)
+        SET_OFF_TMR_LIST.append(f"{h:d}h:{m:02d}m")
 
+SET_OFF_TMR_LIST.append(f"2h:00m")
 
-CTCSS_TONES = [
-    67.0, 69.3, 71.9, 74.4, 77.0, 79.7, 82.5, 85.4,
-    88.5, 91.5, 94.8, 97.4, 100.0, 103.5, 107.2, 110.9,
-    114.8, 118.8, 123.0, 127.3, 131.8, 136.5, 141.3, 146.2,
-    151.4, 156.7, 159.8, 162.2, 165.5, 167.9, 171.3, 173.8,
-    177.3, 179.9, 183.5, 186.2, 189.9, 192.8, 196.6, 199.5,
-    203.5, 206.5, 210.7, 218.1, 225.7, 229.1, 233.6, 241.8,
-    250.3, 254.1
-]
+# Add Auto Keypad Lock values
+AUTO_KEYPAD_LOCK_LIST = ["OFF"]
+for s in range(10):  # From 0 to 10 minutes
+    for ms in ["00s", "15s", "30s", "45s"]:
+        if s == 0 and ms == "00s":  # Cancel "00m:00s"
+            continue
+        AUTO_KEYPAD_LOCK_LIST.append(f"{s:02d}m:{ms}")
+AUTO_KEYPAD_LOCK_LIST.append("10m:00s")  # Add "10m:00s" a the end
 
-# lifted from ft4.py
-DTCS_CODES = [  # TODO: add negative codes
-    23,  25,  26,  31,  32,  36,  43,  47,  51,  53,  54,
-    65,  71,  72,  73,  74,  114, 115, 116, 122, 125, 131,
-    132, 134, 143, 145, 152, 155, 156, 162, 165, 172, 174,
-    205, 212, 223, 225, 226, 243, 244, 245, 246, 251, 252,
-    255, 261, 263, 265, 266, 271, 274, 306, 311, 315, 325,
-    331, 332, 343, 346, 351, 356, 364, 365, 371, 411, 412,
-    413, 423, 431, 432, 445, 446, 452, 454, 455, 462, 464,
-    465, 466, 503, 506, 516, 523, 526, 532, 546, 565, 606,
-    612, 624, 627, 631, 632, 654, 662, 664, 703, 712, 723,
-    731, 732, 734, 743, 754
-]
+# battery save
+BATSAVE_LIST = ["OFF", "1:1", "1:2", "1:3", "1:4", "1:5"]
 
-# flock list extended
-FLOCK_LIST = ["DEFAULT+ (137-174, 400-470)",
-              "FCC HAM (144-148, 420-450)",
-              "CA HAM (144-148, 430-450)",
-              "CE HAM (144-146, 430-440)",
-              "GB HAM (144-148, 430-440)",
-              "137-174, 400-430",
-              "137-174, 400-438",
-              "PMR 446",
-              "GMRS FRS MURS",
-              "DISABLE ALL",
-              "UNLOCK ALL"]
+# battery type
+BATTYPE_LIST = ["1600 mAh", "2200 mAh", "3500 mAh"]
+# bat txt
+BAT_TXT_LIST = ["NONE", "VOLTAGE", "PERCENT"]
+# Backlight auto mode
+BACKLIGHT_LIST = ["OFF", "5 sec", "10 sec", "15 sec", "20 sec", "25 sec", "30 sec", "35 sec", "40 sec", "45 sec", "50 sec", "55 sec", 
+                  "1 min", "1 min : 5 sec", "1 min : 10 sec", "1 min : 15 sec", "1 min : 20 sec", "1 min : 25 sec", "1 min : 30 sec", "1 min : 35 sec", "1 min : 40 sec", "1 min : 45 sec", "1 min : 50 sec", "1 min : 55 sec", 
+                  "2 min", "2 min : 5 sec", "2 min : 10 sec", "2 min : 15 sec", "2 min : 20 sec", "2 min : 25 sec", "2 min : 30 sec", "2 min : 35 sec", "2 min : 40 sec", "2 min : 45 sec", "2 min : 50 sec", "2 min : 55 sec", 
+                  "3 min", "3 min : 5 sec", "3 min : 10 sec", "3 min : 15 sec", "3 min : 20 sec", "3 min : 25 sec", "3 min : 30 sec", "3 min : 35 sec", "3 min : 40 sec", "3 min : 45 sec", "3 min : 50 sec", "3 min : 55 sec", 
+                  "4 min", "4 min : 5 sec", "4 min : 10 sec", "4 min : 15 sec", "4 min : 20 sec", "4 min : 25 sec", "4 min : 30 sec", "4 min : 35 sec", "4 min : 40 sec", "4 min : 45 sec", "4 min : 50 sec", "4 min : 55 sec",
+                  "5 min", "5 min : 5 sec", "5 min : 10 sec", "5 min : 15 sec", "5 min : 20 sec", "5 min : 25 sec", "5 min : 30 sec", "5 min : 35 sec", "5 min : 40 sec", "5 min : 45 sec", "5 min : 50 sec", "5 min : 55 sec",
+                  "6 min", "6 min : 5 sec", "6 min : 10 sec", "6 min : 15 sec", "6 min : 20 sec", "6 min : 25 sec", "6 min : 30 sec", "6 min : 35 sec", "6 min : 40 sec", "6 min : 45 sec", "6 min : 50 sec", "6 min : 55 sec", 
+                  "7 min", "7 min : 5 sec", "7 min : 10 sec", "7 min : 15 sec", "7 min : 20 sec", "7 min : 25 sec", "7 min : 30 sec", "7 min : 35 sec", "7 min : 40 sec", "7 min : 45 sec", "7 min : 50 sec", "7 min : 55 sec", 
+                  "8 min", "8 min : 5 sec", "8 min : 10 sec", "8 min : 15 sec", "8 min : 20 sec", "8 min : 25 sec", "8 min : 30 sec", "8 min : 35 sec", "8 min : 40 sec", "8 min : 45 sec", "8 min : 50 sec", "8 min : 55 sec", 
+                  "9 min", "9 min : 5 sec", "9 min : 10 sec", "9 min : 15 sec", "9 min : 20 sec", "9 min : 25 sec", "9 min : 30 sec", "9 min : 35 sec", "9 min : 40 sec", "9 min : 45 sec", "9 min : 50 sec", "9 min : 55 sec",
+                  "10 min", "10 min : 5 sec", "10 min : 10 sec", "10 min : 15 sec", "10 min : 20 sec", "10 min : 25 sec", "10 min : 30 sec", "10 min : 35 sec", "10 min : 40 sec", "10 min : 45 sec", "10 min : 50 sec", "10 min : 55 sec",
+                  "11 min", "11 min : 5 sec", "11 min : 10 sec", "11 min : 15 sec", "11 min : 20 sec", "11 min : 25 sec", "11 min : 30 sec", "11 min : 35 sec", "11 min : 40 sec", "11 min : 45 sec", "11 min : 50 sec", "11 min : 55 sec", 
+                  "12 min", "12 min : 5 sec", "12 min : 10 sec", "12 min : 15 sec", "12 min : 20 sec", "12 min : 25 sec", "12 min : 30 sec", "12 min : 35 sec", "12 min : 40 sec", "12 min : 45 sec", "12 min : 50 sec", "12 min : 55 sec", 
+                  "13 min", "13 min : 5 sec", "13 min : 10 sec", "13 min : 15 sec", "13 min : 20 sec", "13 min : 25 sec", "13 min : 30 sec", "13 min : 35 sec", "13 min : 40 sec", "13 min : 45 sec", "13 min : 50 sec", "13 min : 55 sec", 
+                  "14 min", "14 min : 5 sec", "14 min : 10 sec", "14 min : 15 sec", "14 min : 20 sec", "14 min : 25 sec", "14 min : 30 sec", "14 min : 35 sec", "14 min : 40 sec", "14 min : 45 sec", "14 min : 50 sec", "14 min : 55 sec",
+                  "15 min"]
 
-# Scan Resum List              
-SCANRESUME_LIST = ["STOP : Stop scan when a signal is received"]
+# Set NFM value
+SET_NFM_LIST = ["NARROW", "NARROWER"]
 
-# Add "CARRIER" values
-for s in range(20):  # From 0 to 20s
-    for ms in ["250ms", "500ms", "750ms"] if s == 0 else ["000ms", "250ms", "500ms", "750ms"]:
-        SCANRESUME_LIST.append(f"CARRIER {s:02d}s:{ms} : Listen for this time until the signal disappears")
+# Set KEY value
+SET_KEY_LIST = ["MENU", "KEY_UP", "KEY_DOWN", "KEY_EXIT", "KEY_STAR"]
 
-SCANRESUME_LIST.append(f"CARRIER 20s:000ms : Listen for this time until the signal disappears")
+# Set Off timer 
+SET_OFF_TMR_LIST = ["OFF"]
 
-# Add "TIMEOUT" values
-for m in range(5, 125, 5):  # From 5 to 120 secondes (2 minutes)
-    minutes = m // 60
-    seconds = m % 60
-    SCANRESUME_LIST.append(f"TIMEOUT {minutes:02d}m:{seconds:02d}s : Listen for this time and resume")
+# Add values from 00h:01m to 02h:00m
+for h in range(2):  # From 0 to 2 hours
+    if h == 1:  # Add 01h:00m
+        SET_OFF_TMR_LIST.append(f"{h:d}h:00m")
+    for m in range(1, 60):  # From 1 to 59 minutes (start at 1)
+        SET_OFF_TMR_LIST.append(f"{h:d}h:{m:02d}m")
 
-# Welcome and Voice list     
-WELCOME_LIST = ["Message line 1, Voltage, Sound (ALL)", "Make 2 short sounds (SOUND)", "User message line 1 and line 2 (MESSAGE)", "Battery voltage (VOLTAGE)", "NONE"]
-VOICE_LIST = ["OFF", "Chinese", "English"]
+SET_OFF_TMR_LIST.append(f"2h:00m")
 
-# ACTIVE CHANNEL
-TX_VFO_LIST = ["A", "B"]
-ALARMMODE_LIST = ["SITE", "TONE"]
-ROGER_LIST = ["OFF", "Roger beep (ROGER)", "MDC data burst (MDC)"]
-RTE_LIST = ["OFF", "100ms", "200ms", "300ms", "400ms",
-            "500ms", "600ms", "700ms", "800ms", "900ms", "1000ms"]
-VOX_LIST = ["OFF", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+# Add Auto Keypad Lock values
+AUTO_KEYPAD_LOCK_LIST = ["OFF"]
+for s in range(10):  # From 0 to 10 minutes
+    for ms in ["00s", "15s", "30s", "45s"]:
+        if s == 0 and ms == "00s":  # Cancel "00m:00s"
+            continue
+        AUTO_KEYPAD_LOCK_LIST.append(f"{s:02d}m:{ms}")
+AUTO_KEYPAD_LOCK_LIST.append("10m:00s")  # Add "10m:00s" a the end
 
-MEM_SIZE = 0x2000 # size of all memory
-PROG_SIZE = 0x1d00  # size of the memory that we will write
-MEM_BLOCK = 0x80  # largest block of memory that we can reliably write
-CAL_START = 0x1E00  # calibration memory start address
-F4HWN_START =0x1FF2 # calibration F4HWN memory start address
-MORSE_START = 0x1FD0
-MORSE_SIZE = 0x20
+# battery save
+BATSAVE_LIST = ["OFF", "1:1", "1:2", "1:3", "1:4", "1:5"]
 
-# fm radio supported frequencies
-FMMIN = 76.0
-FMMAX = 108.0
+# battery type
+BATTYPE_LIST = ["1600 mAh", "2200 mAh", "3500 mAh"]
+# bat txt
+BAT_TXT_LIST = ["NONE", "VOLTAGE", "PERCENT"]
+# Backlight auto mode
+BACKLIGHT_LIST = ["OFF", "5 sec", "10 sec", "15 sec", "20 sec", "25 sec", "30 sec", "35 sec", "40 sec", "45 sec", "50 sec", "55 sec", 
+                  "1 min", "1 min : 5 sec", "1 min : 10 sec", "1 min : 15 sec", "1 min : 20 sec", "1 min : 25 sec", "1 min : 30 sec", "1 min : 35 sec", "1 min : 40 sec", "1 min : 45 sec", "1 min : 50 sec", "1 min : 55 sec", 
+                  "2 min", "2 min : 5 sec", "2 min : 10 sec", "2 min : 15 sec", "2 min : 20 sec", "2 min : 25 sec", "2 min : 30 sec", "2 min : 35 sec", "2 min : 40 sec", "2 min : 45 sec", "2 min : 50 sec", "2 min : 55 sec", 
+                  "3 min", "3 min : 5 sec", "3 min : 10 sec", "3 min : 15 sec", "3 min : 20 sec", "3 min : 25 sec", "3 min : 30 sec", "3 min : 35 sec", "3 min : 40 sec", "3 min : 45 sec", "3 min : 50 sec", "3 min : 55 sec", 
+                  "4 min", "4 min : 5 sec", "4 min : 10 sec", "4 min : 15 sec", "4 min : 20 sec", "4 min : 25 sec", "4 min : 30 sec", "4 min : 35 sec", "4 min : 40 sec", "4 min : 45 sec", "4 min : 50 sec", "4 min : 55 sec",
+                  "5 min", "5 min : 5 sec", "5 min : 10 sec", "5 min : 15 sec", "5 min : 20 sec", "5 min : 25 sec", "5 min : 30 sec", "5 min : 35 sec", "5 min : 40 sec", "5 min : 45 sec", "5 min : 50 sec", "5 min : 55 sec",
+                  "6 min", "6 min : 5 sec", "6 min : 10 sec", "6 min : 15 sec", "6 min : 20 sec", "6 min : 25 sec", "6 min : 30 sec", "6 min : 35 sec", "6 min : 40 sec", "6 min : 45 sec", "6 min : 50 sec", "6 min : 55 sec", 
+                  "7 min", "7 min : 5 sec", "7 min : 10 sec", "7 min : 15 sec", "7 min : 20 sec", "7 min : 25 sec", "7 min : 30 sec", "7 min : 35 sec", "7 min : 40 sec", "7 min : 45 sec", "7 min : 50 sec", "7 min : 55 sec", 
+                  "8 min", "8 min : 5 sec", "8 min : 10 sec", "8 min : 15 sec", "8 min : 20 sec", "8 min : 25 sec", "8 min : 30 sec", "8 min : 35 sec", "8 min : 40 sec", "8 min : 45 sec", "8 min : 50 sec", "8 min : 55 sec", 
+                  "9 min", "9 min : 5 sec", "9 min : 10 sec", "9 min : 15 sec", "9 min : 20 sec", "9 min : 25 sec", "9 min : 30 sec", "9 min : 35 sec", "9 min : 40 sec", "9 min : 45 sec", "9 min : 50 sec", "9 min : 55 sec",
+                  "10 min", "10 min : 5 sec", "10 min : 10 sec", "10 min : 15 sec", "10 min : 20 sec", "10 min : 25 sec", "10 min : 30 sec", "10 min : 35 sec", "10 min : 40 sec", "10 min : 45 sec", "10 min : 50 sec", "10 min : 55 sec",
+                  "11 min", "11 min : 5 sec", "11 min : 10 sec", "11 min : 15 sec", "11 min : 20 sec", "11 min : 25 sec", "11 min : 30 sec", "11 min : 35 sec", "11 min : 40 sec", "11 min : 45 sec", "11 min : 50 sec", "11 min : 55 sec", 
+                  "12 min", "12 min : 5 sec", "12 min : 10 sec", "12 min : 15 sec", "12 min : 20 sec", "12 min : 25 sec", "12 min : 30 sec", "12 min : 35 sec", "12 min : 40 sec", "12 min : 45 sec", "12 min : 50 sec", "12 min : 55 sec", 
+                  "13 min", "13 min : 5 sec", "13 min : 10 sec", "13 min : 15 sec", "13 min : 20 sec", "13 min : 25 sec", "13 min : 30 sec", "13 min : 35 sec", "13 min : 40 sec", "13 min : 45 sec", "13 min : 50 sec", "13 min : 55 sec", 
+                  "14 min", "14 min : 5 sec", "14 min : 10 sec", "14 min : 15 sec", "14 min : 20 sec", "14 min : 25 sec", "14 min : 30 sec", "14 min : 35 sec", "14 min : 40 sec", "14 min : 45 sec", "14 min : 50 sec", "14 min : 55 sec",
+                  "15 min"]
 
-# bands supported by the UV-K5
-BANDS_STANDARD = {
-        0: [50.0, 76.0],
-        1: [108.0, 136.9999],
-        2: [137.0, 173.9999],
-        3: [174.0, 349.9999],
-        4: [350.0, 399.9999],
-        5: [400.0, 469.9999],
-        6: [470.0, 600.0]
-        }
+# Set NFM value
+SET_NFM_LIST = ["NARROW", "NARROWER"]
 
-BANDS_WIDE = {
-        0: [18.0, 108.0],
-        1: [108.0, 136.9999],
-        2: [137.0, 173.9999],
-        3: [174.0, 349.9999],
-        4: [350.0, 399.9999],
-        5: [400.0, 469.9999],
-        6: [470.0, 1300.0]
-        }
+# Set KEY value
+SET_KEY_LIST = ["MENU", "KEY_UP", "KEY_DOWN", "KEY_EXIT", "KEY_STAR"]
 
-SCANLIST_LIST = ["None ", "List [1]", "List [2]", "List [1, 2]", "List [3]", "List [1, 3]", "List [2, 3]", "All List [1, 2, 3]"]
-SCANLIST_SELECT_LIST = ["LIST [0] NO LIST ", "LIST [1]", "LIST [2]", "LIST [3]", "LISTS [1, 2, 3]", "All Channel (ALL)"]
+# Set Off timer 
+SET_OFF_TMR_LIST = ["OFF"]
 
-DTMF_CHARS = "0123456789ABCD*# "
-DTMF_CHARS_ID = "0123456789ABCDabcd"
-DTMF_CHARS_KILL = "0123456789ABCDabcd"
-DTMF_CHARS_UPDOWN = "0123456789ABCDabcd#* "
-DTMF_CODE_CHARS = "ABCD*# "
-DTMF_DECODE_RESPONSE_LIST = ["DO NOTHING", "Local ringing (RING)", "Replay response (REPLY)",
-                             "Local ringing + reply response (BOTH)"]
+# Add values from 00h:01m to 02h:00m
+for h in range(2):  # From 0 to 2 hours
+    if h == 1:  # Add 01h:00m
+        SET_OFF_TMR_LIST.append(f"{h:d}h:00m")
+    for m in range(1, 60):  # From 1 to 59 minutes (start at 1)
+        SET_OFF_TMR_LIST.append(f"{h:d}h:{m:02d}m")
 
-KEYACTIONS_LIST = ["NONE",
-                   "FLASHLIGHT",
-                   "POWER",
-                   "MONITOR",
-                   "SCAN",
-                   "Voice detection (VOX)",
-                   "ALARM",
-                   "FM RADIO",
-                   "1750Hz TONE",
-                   "LOCK KEYPAD",
-                   "Main VFO (VFO A / VFO B)",
-                   "Frequency/memory mode (VFO / MEM)",
-                   "MODE",
-                   "Put the backlight OFF temporarily (BL_MIN_TMP_OFF)",
-                   "Change RxMode: *Main only,*Dual RX,*Cross Band,*TX Dual RX (RX MODE)",
-                   "MAIN ONLY", 
-                   "Toggle CLASSIC to ONE PUSH ptt (PTT)",                  
-                   "WIDE / NARROW",
-                   "BACKLIGHT",
-                   "MUTE",
-                   "POWER HIGH",
-                   "REMOVE OFFSET"
+SET_OFF_TMR_LIST.append(f"2h:00m")
+
+# Add Auto Keypad Lock values
+AUTO_KEYPAD_LOCK_LIST = ["OFF"]
+for s in range(10):  # From 0 to 10 minutes
+    for ms in ["00s", "15s", "30s", "45s"]:
+        if s == 0 and ms == "00s":  # Cancel "00m:00s"
+            continue
+        AUTO_KEYPAD_LOCK_LIST.append(f"{s:02d}m:{ms}")
+AUTO_KEYPAD_LOCK_LIST.append("10m:00s")  # Add "10m:00s" a the end
+
+# battery save
+BATSAVE_LIST = ["OFF", "1:1", "1:2", "1:3", "1:4", "1:5"]
+
+# battery type
+BATTYPE_LIST = ["1600 mAh", "2200 mAh", "3500 mAh"]
+# bat txt
+BAT_TXT_LIST = ["NONE", "VOLTAGE", "PERCENT"]
+# Backlight auto mode
+BACKLIGHT_LIST = ["OFF", "5 sec", "10 sec", "15 sec", "20 sec", "25 sec", "30 sec", "35 sec", "40 sec", "45 sec", "50 sec", "55 sec", 
+                  "1 min", "1 min : 5 sec", "1 min : 10 sec", "1 min : 15 sec", "1 min : 20 sec", "1 min : 25 sec", "1 min : 30 sec", "1 min : 35 sec", "1 min : 40 sec", "1 min : 45 sec", "1 min : 50 sec", "1 min : 55 sec", 
+                  "2 min", "2 min : 5 sec", "2 min : 10 sec", "2 min : 15 sec", "2 min : 20 sec", "2 min : 25 sec", "2 min : 30 sec", "2 min : 35 sec", "2 min : 40 sec", "2 min : 45 sec", "2 min : 50 sec", "2 min : 55 sec", 
+                  "3 min", "3 min : 5 sec", "3 min : 10 sec", "3 min : 15 sec", "3 min : 20 sec", "3 min : 25 sec", "3 min : 30 sec", "3 min : 35 sec", "3 min : 40 sec", "3 min : 45 sec", "3 min : 50 sec", "3 min : 55 sec", 
+                  "4 min", "4 min : 5 sec", "4 min : 10 sec", "4 min : 15 sec", "4 min : 20 sec", "4 min : 25 sec", "4 min : 30 sec", "4 min : 35 sec", "4 min : 40 sec", "4 min : 45 sec", "4 min : 50 sec", "4 min : 55 sec",
+                  "5 min", "5 min : 5 sec", "5 min : 10 sec", "5 min : 15 sec", "5 min : 20 sec", "5 min : 25 sec", "5 min : 30 sec", "5 min : 35 sec", "5 min : 40 sec", "5 min : 45 sec", "5 min : 50 sec", "5 min : 55 sec",
+                  "6 min", "6 min : 5 sec", "6 min : 10 sec", "6 min : 15 sec", "6 min : 20 sec", "6 min : 25 sec", "6 min : 30 sec", "6 min : 35 sec", "6 min : 40 sec", "6 min : 45 sec", "6 min : 50 sec", "6 min : 55 sec", 
+                  "7 min", "7 min : 5 sec", "7 min : 10 sec", "7 min : 15 sec", "7 min : 20 sec", "7 min : 25 sec", "7 min : 30 sec", "7 min : 35 sec", "7 min : 40 sec", "7 min : 45 sec", "7 min : 50 sec", "7 min : 55 sec", 
+                  "8 min", "8 min : 5 sec", "8 min : 10 sec", "8 min : 15 sec", "8 min : 20 sec", "8 min : 25 sec", "8 min : 30 sec", "8 min : 35 sec", "8 min : 40 sec", "8 min : 45 sec", "8 min : 50 sec", "8 min : 55 sec", 
+                  "9 min", "9 min : 5 sec", "9 min : 10 sec", "9 min : 15 sec", "9 min : 20 sec", "9 min : 25 sec", "9 min : 30 sec", "9 min : 35 sec", "9 min : 40 sec", "9 min : 45 sec", "9 min : 50 sec", "9 min : 55 sec",
+                  "10 min", "10 min : 5 sec", "10 min : 10 sec", "10 min : 15 sec", "10 min : 20 sec", "10 min : 25 sec", "10 min : 30 sec", "10 min : 35 sec", "10 min : 40 sec", "10 min : 45 sec", "10 min : 50 sec", "10 min : 55 sec",
+                  "11 min", "11 min : 5 sec", "11 min : 10 sec", "11 min : 15 sec", "11 min : 20 sec", "11 min : 25 sec", "11 min : 30 sec", "11 min : 35 sec", "11 min : 40 sec", "11 min : 45 sec", "11 min : 50 sec", "11 min : 55 sec", 
+                  "12 min", "12 min : 5 sec", "12 min : 10 sec", "12 min : 15 sec", "12 min : 20 sec", "12 min : 25 sec", "12 min : 30 sec", "12 min : 35 sec", "12 min : 40 sec", "12 min : 45 sec", "12 min : 50 sec", "12 min : 55 sec", 
+                  "13 min", "13 min : 5 sec", "13 min : 10 sec", "13 min : 15 sec", "13 min : 20 sec", "13 min : 25 sec", "13 min : 30 sec", "13 min : 35 sec", "13 min : 40 sec", "13 min : 45 sec", "13 min : 50 sec", "13 min : 55 sec", 
+                  "14 min", "14 min : 5 sec", "14 min : 10 sec", "14 min : 15 sec", "14 min : 20 sec", "14 min : 25 sec", "14 min : 30 sec", "14 min : 35 sec", "14 min : 40 sec", "14 min : 45 sec", "14 min : 50 sec", "14 min : 55 sec",
+                  "15 min"]
+
+# Set NFM value
+SET_NFM_LIST = ["NARROW", "NARROWER"]
+
+# Set KEY value
+SET_KEY_LIST = ["MENU", "KEY_UP", "KEY_DOWN", "KEY_EXIT", "KEY_STAR"]
+
+# Set Off timer 
+SET_OFF_TMR_LIST = ["OFF"]
+
+# Add values from 00h:01m to 02h:00m
+for h in range(2):  # From 0 to 2 hours
+    if h == 1:  # Add 01h:00m
+        SET_OFF_TMR_LIST.append(f"{h:d}h:00m")
+    for m in range(1, 60):  # From 1 to 59 minutes (start at 1)
+        SET_OFF_TMR_LIST.append(f"{h:d}h:{m:02d}m")
+
+SET_OFF_TMR_LIST.append(f"2h:00m")
+
+# Add Auto Keypad Lock values
+AUTO_KEYPAD_LOCK_LIST = ["OFF"]
+for s in range(10):  # From 0 to 10 minutes
+    for ms in ["00s", "15s", "30s", "45s"]:
+        if s == 0 and ms == "00s":  # Cancel "00m:00s"
+            continue
+        AUTO_KEYPAD_LOCK_LIST.append(f"{s:02d}m:{ms}")
+AUTO_KEYPAD_LOCK_LIST.append("10m:00s")  # Add "10m:00s" a the end
+
+# battery save
+BATSAVE_LIST = ["OFF", "1:1", "1:2", "1:3", "1:4", "1:5"]
+
+# battery type
+BATTYPE_LIST = ["1600 mAh", "2200 mAh", "3500 mAh"]
+# bat txt
+BAT_TXT_LIST = ["NONE", "VOLTAGE", "PERCENT"]
+# Backlight auto mode
+BACKLIGHT_LIST = ["OFF", "5 sec", "10 sec", "15 sec", "20 sec", "25 sec", "30 sec", "35 sec", "40 sec", "45 sec", "50 sec", "55 sec", 
+                  "1 min", "1 min : 5 sec", "1 min : 10 sec", "1 min : 15 sec", "1 min : 20 sec", "1 min : 25 sec", "1 min : 30 sec", "1 min : 35 sec", "1 min : 40 sec", "1 min : 45 sec", "1 min : 50 sec", "1 min : 55 sec", 
+                  "2 min", "2 min : 5 sec", "2 min : 10 sec", "2 min : 15 sec", "2 min : 20 sec", "2 min : 25 sec", "2 min : 30 sec", "2 min : 35 sec", "2 min : 40 sec", "2 min : 45 sec", "2 min : 50 sec", "2 min : 55 sec", 
+                  "3 min", "3 min : 5 sec", "3 min : 10 sec", "3 min : 15 sec", "3 min : 20 sec", "3 min : 25 sec", "3 min : 30 sec", "3 min : 35 sec", "3 min : 40 sec", "3 min : 45 sec", "3 min : 50 sec", "3 min : 55 sec", 
+                  "4 min", "4 min : 5 sec", "4 min : 10 sec", "4 min : 15 sec", "4 min : 20 sec", "4 min : 25 sec", "4 min : 30 sec", "4 min : 35 sec", "4 min : 40 sec", "4 min : 45 sec", "4 min : 50 sec", "4 min : 55 sec",
+                  "5 min", "5 min : 5 sec", "5 min : 10 sec", "5 min : 15 sec", "5 min : 20 sec", "5 min : 25 sec", "5 min : 30 sec", "5 min : 35 sec", "5 min : 40 sec", "5 min : 45 sec", "5 min : 50 sec", "5 min : 55 sec",
+                  "6 min", "6 min : 5 sec", "6 min : 10 sec", "6 min : 15 sec", "6 min : 20 sec", "6 min : 25 sec", "6 min : 30 sec", "6 min : 35 sec", "6 min : 40 sec", "6 min : 45 sec", "6 min : 50 sec", "6 min : 55 sec", 
+                  "7 min", "7 min : 5 sec", "7 min : 10 sec", "7 min : 15 sec", "7 min : 20 sec", "7 min : 25 sec", "7 min : 30 sec", "7 min : 35 sec", "7 min : 40 sec", "7 min : 45 sec", "7 min : 50 sec", "7 min : 55 sec", 
+                  "8 min", "8 min : 5 sec", "8 min : 10 sec", "8 min : 15 sec", "8 min : 20 sec", "8 min : 25 sec", "8 min : 30 sec", "8 min : 35 sec", "8 min : 40 sec", "8 min : 45 sec", "8 min : 50 sec", "8 min : 55 sec", 
+                  "9 min", "9 min : 5 sec", "9 min : 10 sec", "9 min : 15 sec", "9 min : 20 sec", "9 min : 25 sec", "9 min : 30 sec", "9 min : 35 sec", "9 min : 40 sec", "9 min : 45 sec", "9 min : 50 sec", "9 min : 55 sec",
                   ]
 
-MORSE_CWID_PART_LEN = 10
-MORSE_CWID_MAX_LEN = 20
-MORSE_CWID_TOTAL_LEN = 20
-MORSE_CWID_DEFAULT = "DE N0CALL"
-MORSE_WPM_DEFAULT = 15
-MORSE_WPM_MIN = 5
-MORSE_WPM_MAX = 30
-MORSE_EFF_WPM_DEFAULT = MORSE_WPM_DEFAULT
-MORSE_EFF_WPM_MIN = MORSE_WPM_MIN
-MORSE_EFF_WPM_MAX = MORSE_WPM_MAX
-MORSE_STOP_INTERVAL_DEFAULT_MS = 45000
-MORSE_STOP_INTERVAL_MIN_MS = 1000
-MORSE_STOP_INTERVAL_MAX_MS = 60000
-MORSE_BEEP_INTERVAL_DEFAULT_MS = 7500
-MORSE_BEEP_INTERVAL_MIN_MS = 0
-MORSE_BEEP_INTERVAL_MAX_MS = 30000
-MORSE_BEEP_INTERVAL_STEP_MS = 100
-MORSE_TONE_HZ_DEFAULT = 600
-MORSE_TONE_HZ_MIN = 300
-MORSE_TONE_HZ_MAX = 1200
-MORSE_TONE_HZ_STEP = 10
-
-MIC_GAIN_LIST = ["+1.1dB", "+4.0dB", "+8.0dB", "+12.0dB", "+15.1dB"]
+for min_val in range(10, 15):
+    BACKLIGHT_LIST.extend([f"{min_val} min"] +
+                          [f"{min_val} min : {sec} sec" for sec in range(5, 60, 5)])
+BACKLIGHT_LIST.append("15 min")
 
 
 def xorarr(data: bytes):
-    """the communication is obfuscated using this fine mechanism"""
+    """obfuscate/deobfuscate communication data"""
     tbl = [22, 108, 20, 230, 46, 145, 13, 64, 33, 53, 213, 64, 19, 3, 233, 128]
     ret = b""
     idx = 0
     for byte in data:
         ret += bytes([byte ^ tbl[idx]])
-        idx = (idx+1) % len(tbl)
+        idx = (idx + 1) % len(tbl)
     return ret
 
 
 def calculate_crc16_xmodem(data: bytes):
-    """
-    if this crc was used for communication to AND from the radio, then it
-    would be a measure to increase reliability.
-    but it's only used towards the radio, so it's for further obfuscation
-    """
+    """CRC16-XMODEM"""
     poly = 0x1021
     crc = 0x0
     for byte in data:
@@ -981,6 +1082,55 @@ def do_download(radio):
     return memmap.MemoryMapBytes(eeprom)
 
 
+def _build_morse_block(radio):
+    """Construct the Morse configuration block from the radio's memory object."""
+    try:
+        mem = radio._memobj
+        if mem is None: raise Exception("No memory object found")
+
+        def _get_int(val, default):
+            try:
+                if isinstance(val, int): return val
+                if hasattr(val, "value"): return int(val.value)
+                return int(val)
+            except: return default
+
+        def _get_cwid(val):
+            try:
+                if hasattr(val, "get_value"): val = val.get_value()
+                if hasattr(val, "value"): val = val.value
+                if isinstance(val, (bytes, bytearray)): return bytes(val)
+                if isinstance(val, str): return val.encode("latin-1")
+                return None
+            except: return None
+
+        wpm = min_max_def(_get_int(mem.morse.morse_wpm, MORSE_WPM_DEFAULT), MORSE_WPM_MIN, MORSE_WPM_MAX, MORSE_WPM_DEFAULT)
+        eff_wpm = min_max_def(_get_int(mem.morse.morse_eff_wpm, MORSE_EFF_WPM_DEFAULT), MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, MORSE_EFF_WPM_DEFAULT)
+        if eff_wpm > wpm: eff_wpm = wpm
+        stop_ms = min_max_def(_get_int(mem.morse.morse_stop_ms, MORSE_STOP_INTERVAL_DEFAULT_MS), MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS, MORSE_STOP_INTERVAL_DEFAULT_MS)
+        beep_ms = min_max_def(_get_int(mem.morse.morse_beep_ms, MORSE_BEEP_INTERVAL_DEFAULT_MS), MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS, MORSE_BEEP_INTERVAL_DEFAULT_MS)
+        tone_hz = min_max_def(_get_int(mem.morse.morse_tone_hz, MORSE_TONE_HZ_DEFAULT), MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, MORSE_TONE_HZ_DEFAULT)
+
+        cwid1 = _get_cwid(mem.morse.cwid1) or (radio.get_mmap()[MORSE_START:MORSE_START+10] if not isinstance(radio.get_mmap(), slice) else b"\xFF"*10)
+        cwid2 = _get_cwid(mem.morse.cwid2) or (radio.get_mmap()[MORSE_START+10:MORSE_START+20] if not isinstance(radio.get_mmap(), slice) else b"\xFF"*10)
+
+        data = bytearray(MORSE_SIZE)
+        data[0:10] = (bytes(cwid1) + b"\xFF"*10)[:10]
+        data[10:20] = (bytes(cwid2) + b"\xFF"*10)[:10]
+        data[20:28] = struct.pack("<BHBHH", int(wpm), int(stop_ms), int(eff_wpm), int(beep_ms), int(tone_hz))
+        
+        if len(data) < MORSE_SIZE: data += b"\xFF" * (MORSE_SIZE - len(data))
+
+        try:
+             mmap = radio.get_mmap()
+             if not isinstance(mmap, slice): mmap[MORSE_START:MORSE_START+MORSE_SIZE] = data
+        except: pass
+        return bytes(data)
+    except Exception as e:
+        LOG.error(f"Failed to build morse block: {e}")
+        try: return bytes(radio.get_mmap()[MORSE_START:MORSE_START + MORSE_SIZE])
+        except: return b"\xFF" * MORSE_SIZE
+
 def do_upload(radio):
     """upload configuration to radio eeprom"""
     serport = radio.pipe
@@ -1026,21 +1176,14 @@ def do_upload(radio):
         mstep += 1 # go to next step
                     
         if mstep == 1:   # if the first write mem done , pass to f4hwn value
-            morse_data = radio.get_mmap()[MORSE_START:MORSE_START + MORSE_SIZE]
+            # Write CW settings
+            morse_data = _build_morse_block(radio)
             for i in range(0, MORSE_SIZE, 8):
                 _writemem(serport, morse_data[i:i + 8], MORSE_START + i)
 
             status.max = MEM_SIZE-F4HWN_START
             start_addr = F4HWN_START
             stop_addr = MEM_SIZE
-
-    morse_data = radio.get_mmap()[MORSE_START:MORSE_START + MORSE_SIZE]
-    for i in range(0, MORSE_SIZE, 8):
-        _writemem(serport, morse_data[i:i + 8], MORSE_START + i)
-
-    verify = _readmem(serport, MORSE_START, MORSE_SIZE)
-    if verify[:MORSE_SIZE] != morse_data:
-        raise errors.RadioError("Morse EEPROM write failed")
 
     status.msg = "Uploaded OK"
 
@@ -1504,155 +1647,166 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 
     def set_settings(self, settings):
         _mem = self._memobj
-        is_root = False
-        if not hasattr(self, "_cw_settings_pending"):
-            self._cw_settings_pending = {}
-            is_root = True
-        try:
-            for element in settings:
-                if isinstance(element, RadioSettingGroup):
-                    self.set_settings(element)
-                    continue
-                if not isinstance(element, RadioSetting):
-                    continue
+        for element in settings:
+            if not isinstance(element, RadioSetting):
+                self.set_settings(element)
+                continue
 
-                elname = element.get_name()
+            elname = element.get_name()
 
-                if elname in ("cwid_1", "cwid_2"):
-                    self._cw_settings_pending[elname] = str(element.value)
-                    continue
-
-                # basic settings
+            # basic settings
 
             # VFO_A e80 ScreenChannel_A
-                if elname == "VFO_A_chn":
-                    _mem.ScreenChannel_A = int(element.value)
-                    if _mem.ScreenChannel_A < 200:
-                        _mem.MrChannel_A = _mem.ScreenChannel_A
-                    elif _mem.ScreenChannel_A < 207:
-                        _mem.FreqChannel_A = _mem.ScreenChannel_A
-                    else:
-                        _mem.NoaaChannel_A = _mem.ScreenChannel_A
+            if elname == "VFO_A_chn":
+                _mem.ScreenChannel_A = int(element.value)
+                if _mem.ScreenChannel_A < 200:
+                    _mem.MrChannel_A = _mem.ScreenChannel_A
+                elif _mem.ScreenChannel_A < 207:
+                    _mem.FreqChannel_A = _mem.ScreenChannel_A
+                else:
+                    _mem.NoaaChannel_A = _mem.ScreenChannel_A
 
             # VFO_B e83
-                elif elname == "VFO_B_chn":
-                    _mem.ScreenChannel_B = int(element.value)
-                    if _mem.ScreenChannel_B < 200:
-                        _mem.MrChannel_B = _mem.ScreenChannel_B
-                    elif _mem.ScreenChannel_B < 207:
-                        _mem.FreqChannel_B = _mem.ScreenChannel_B
-                    else:
-                        _mem.NoaaChannel_B = _mem.ScreenChannel_B
+            elif elname == "VFO_B_chn":
+                _mem.ScreenChannel_B = int(element.value)
+                if _mem.ScreenChannel_B < 200:
+                    _mem.MrChannel_B = _mem.ScreenChannel_B
+                elif _mem.ScreenChannel_B < 207:
+                    _mem.FreqChannel_B = _mem.ScreenChannel_B
+                else:
+                    _mem.NoaaChannel_B = _mem.ScreenChannel_B
 
             # TX_VFO  channel selected A,B
-                elif elname == "TX_VFO":
-                    _mem.TX_VFO = int(element.value)
+            elif elname == "TX_VFO":
+                _mem.TX_VFO = int(element.value)
 
             # call channel
-                elif elname == "call_channel":
-                    _mem.call_channel = int(element.value)
+            elif elname == "call_channel":
+                _mem.call_channel = int(element.value)
 
             # squelch
-                elif elname == "squelch":
-                    _mem.squelch = int(element.value)
+            elif elname == "squelch":
+                _mem.squelch = int(element.value)
 
-                # TOT
-                elif elname == "tot":
-                    _mem.max_talk_time = int(element.value)
+            # TOT
+            elif elname == "tot":
+                _mem.max_talk_time = int(element.value)
 
-                # NOAA autoscan
-                elif elname == "noaa_autoscan":
-                    _mem.noaa_autoscan = int(element.value)
+            # NOAA autoscan
+            elif elname == "noaa_autoscan":
+                _mem.noaa_autoscan = int(element.value)
 
-                # VOX
-                elif elname == "vox":
-                    voxvalue = int(element.value)
-                    _mem.vox_switch = voxvalue > 0
-                    _mem.vox_level = (voxvalue - 1) if _mem.vox_switch else 0
+            # VOX
+            elif elname == "vox":
+                voxvalue = int(element.value)
+                _mem.vox_switch = voxvalue > 0
+                _mem.vox_level = (voxvalue - 1) if _mem.vox_switch else 0
 
-                # mic gain
-                elif elname == "mic_gain":
-                    _mem.mic_gain = int(element.value)
+            # mic gain
+            elif elname == "mic_gain":
+                _mem.mic_gain = int(element.value)
 
-                # Channel display mode
-                elif elname == "channel_display_mode":
-                    _mem.channel_display_mode = int(element.value)
+            # Channel display mode
+            elif elname == "channel_display_mode":
+                _mem.channel_display_mode = int(element.value)
 
-                # RX Mode
-                elif elname == "rx_mode":
-                    tmptxmode = int(element.value)
-                    tmpmainvfo = _mem.TX_VFO + 1
-                    _mem.crossband = tmpmainvfo * bool(tmptxmode & 0b10)
-                    _mem.dual_watch = tmpmainvfo * bool(tmptxmode & 0b01)
+            # RX Mode
+            elif elname == "rx_mode":
+                tmptxmode = int(element.value)
+                tmpmainvfo = _mem.TX_VFO + 1
+                _mem.crossband = tmpmainvfo * bool(tmptxmode & 0b10)
+                _mem.dual_watch = tmpmainvfo * bool(tmptxmode & 0b01)
 
-                # Battery Save
-                elif elname == "battery_save":
-                    _mem.battery_save = int(element.value)
+            # Battery Save
+            elif elname == "battery_save":
+                _mem.battery_save = int(element.value)
 
-                # Backlight auto mode
-                elif elname == "backlight_time":
-                    _mem.backlight_time = int(element.value)
+            # Backlight auto mode
+            elif elname == "backlight_time":
+                _mem.backlight_time = int(element.value)
 
-                # Backlight min
-                elif elname == "backlight_min":
-                    _mem.backlight_min = int(element.value)
+            # Backlight min
+            elif elname == "backlight_min":
+                _mem.backlight_min = int(element.value)
 
-                # Backlight max
-                elif elname == "backlight_max":
-                    _mem.backlight_max = int(element.value)
+            # Backlight max
+            elif elname == "backlight_max":
+                _mem.backlight_max = int(element.value)
 
-                # Backlight TX_RX
-                elif elname == "backlight_on_TX_RX":
-                    _mem.backlight_on_TX_RX = int(element.value)
-                # AM_fix
-                elif elname == "AM_fix":
-                    _mem.AM_fix = int(element.value)
+            # Backlight TX_RX
+            elif elname == "backlight_on_TX_RX":
+                _mem.backlight_on_TX_RX = int(element.value)
+            # AM_fix
+            elif elname == "AM_fix":
+                _mem.AM_fix = int(element.value)
 
-                # mic_bar
-                elif elname == "mic_bar":
-                    _mem.mic_bar = int(element.value)
+            # mic_bar
+            elif elname == "mic_bar":
+                _mem.mic_bar = int(element.value)
 
-                # Batterie txt
-                elif elname == "battery_text":
-                    _mem.battery_text = int(element.value)
+            # Batterie txt
+            elif elname == "battery_text":
+                _mem.battery_text = int(element.value)
 
-                # Tail tone elimination
-                elif elname == "ste":
-                    _mem.ste = int(element.value)
+            # CW/Morse settings
+            elif elname == "cwid_1":
+                _mem.morse.cwid1 = str(element.value)
 
-                # VFO Open
-                elif elname == "freq_mode_allowed":
-                    _mem.freq_mode_allowed = int(element.value)
+            elif elname == "cwid_2":
+                _mem.morse.cwid2 = str(element.value)
 
-                # Beep control
-                elif elname == "button_beep":
-                    _mem.button_beep = int(element.value)
+            elif elname == "morse_wpm":
+                _mem.morse.morse_wpm = int(element.value)
 
-                # Scan resume mode
-                elif elname == "scan_resume_mode":
-                    _mem.scan_resume_mode = int(element.value)
+            elif elname == "morse_eff_wpm":
+                _mem.morse.morse_eff_wpm = int(element.value)
 
-                # Keypad lock
-                elif elname == "key_lock":
-                    _mem.key_lock = int(element.value)
+            elif elname == "morse_stop_ms":
+                _mem.morse.morse_stop_ms = int(element.value)
 
-                # Auto keypad lock
-                elif elname == "auto_keypad_lock":
-                    _mem.auto_keypad_lock = int(element.value)
+            elif elname == "morse_beep_ms":
+                _mem.morse.morse_beep_ms = int(element.value)
 
-                # Power on display mode
-                elif elname == "welcome_mode":
-                    _mem.power_on_dispmode = int(element.value)
+            elif elname == "morse_tone_hz":
+                _mem.morse.morse_tone_hz = int(element.value)
 
-                # Keypad Tone
-                elif elname == "voice":
-                    _mem.voice = int(element.value)
+            # Tail tone elimination
+            elif elname == "ste":
+                _mem.ste = int(element.value)
 
-                elif elname == "s0_level":
-                    _mem.s0_level = -int(element.value)
+            # VFO Open
+            elif elname == "freq_mode_allowed":
+                _mem.freq_mode_allowed = int(element.value)
 
-                elif elname == "s9_level":
-                    _mem.s9_level = -int(element.value)
+            # Beep control
+            elif elname == "button_beep":
+                _mem.button_beep = int(element.value)
+
+            # Scan resume mode
+            elif elname == "scan_resume_mode":
+                _mem.scan_resume_mode = int(element.value)
+
+            # Keypad lock
+            elif elname == "key_lock":
+                _mem.key_lock = int(element.value)
+
+            # Auto keypad lock
+            elif elname == "auto_keypad_lock":
+                _mem.auto_keypad_lock = int(element.value)
+
+            # Power on display mode
+            elif elname == "welcome_mode":
+                _mem.power_on_dispmode = int(element.value)
+
+            # Keypad Tone
+            elif elname == "voice":
+                _mem.voice = int(element.value)
+
+            elif elname == "s0_level":
+                _mem.s0_level = -int(element.value)
+
+            elif elname == "s9_level":
+                _mem.s9_level = -int(element.value)
 
 #            elif elname == "password":
 #                if element.value.get_value() is None or element.value == "":
@@ -1660,57 +1814,41 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 #                else:
 #                    _mem.password = int(element.value)
 
-                # Alarm mode
-                elif elname == "alarm_mode":
-                    _mem.alarm_mode = int(element.value)
+            # Alarm mode
+            elif elname == "alarm_mode":
+                _mem.alarm_mode = int(element.value)
 
-                # Reminding of end of talk
-                elif elname == "roger_beep":
-                    _mem.roger_beep = int(element.value)
+            # Reminding of end of talk
+            elif elname == "roger_beep":
+                _mem.roger_beep = int(element.value)
 
-                # Repeater tail tone elimination
-                elif elname == "rp_ste":
-                    _mem.rp_ste = int(element.value)
+            # Repeater tail tone elimination
+            elif elname == "rp_ste":
+                _mem.rp_ste = int(element.value)
 
-                # Logo string 1
-                elif elname == "logo1":
-                    bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
-                    _mem.logo_line1 = bts[0:12]+"\x00\xff\xff\xff"
+            # Logo string 1
+            elif elname == "logo1":
+                bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
+                _mem.logo_line1 = bts[0:12]+"\x00\xff\xff\xff"
 
-                # Logo string 2
-                elif elname == "logo2":
-                    bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
-                    _mem.logo_line2 = bts[0:12]+"\x00\xff\xff\xff"
+            # Logo string 2
+            elif elname == "logo2":
+                bts = str(element.value).rstrip("\x20\xff\x00")+"\x00"*12
+                _mem.logo_line2 = bts[0:12]+"\x00\xff\xff\xff"
 
-                # CW/Morse settings
-                elif elname == "cw_wpm":
-                    _mem.morse.morse_wpm = int(element.value)
+            # unlock settings
 
-                elif elname == "cw_eff_wpm":
-                    _mem.morse.morse_eff_wpm = int(element.value)
-
-                elif elname == "cw_tone_hz":
-                    _mem.morse.morse_tone_hz = int(element.value)
-
-                elif elname == "cw_beep_ms":
-                    _mem.morse.morse_beep_ms = int(element.value)
-
-                elif elname == "cw_stop_ms":
-                    _mem.morse.morse_stop_ms = int(element.value)
-
-                # unlock settings
-
-                # FLOCK
-                elif elname == "int_flock":
-                    _mem.int_flock = int(element.value)
+            # FLOCK
+            elif elname == "int_flock":
+                _mem.int_flock = int(element.value)
 
 #            # 350TX
 #            elif elname == "int_350tx":
 #                _mem.int_350tx = int(element.value)
 
-                # KILLED
-                elif elname == "int_KILLED":
-                    _mem.int_KILLED = int(element.value)
+            # KILLED
+            elif elname == "int_KILLED":
+                _mem.int_KILLED = int(element.value)
 
 #            # 200TX
 #            elif elname == "int_200tx":
@@ -1720,230 +1858,209 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 #            elif elname == "int_500tx":
 #                _mem.int_500tx = int(element.value)
 
-                # 350EN
-                elif elname == "int_350en":
-                    _mem.int_350en = int(element.value)
+            # 350EN
+            elif elname == "int_350en":
+                _mem.int_350en = int(element.value)
 
-                # SCREN
-                elif elname == "int_scren":
-                    _mem.int_scren = int(element.value)
+            # SCREN
+            elif elname == "int_scren":
+                _mem.int_scren = int(element.value)
 
-                # battery type
-                elif elname == "Battery_type":
-                    _mem.Battery_type = int(element.value)
+            # battery type
+            elif elname == "Battery_type":
+                _mem.Battery_type = int(element.value)
 
-                # set low_power f4hwn
-                elif elname == "set_pwr":
-                    _mem.set_pwr = int(element.value)
+            # set low_power f4hwn
+            elif elname == "set_pwr":
+                _mem.set_pwr = int(element.value)
 
-                # set ptt f4hwn
-                elif elname == "set_ptt":
-                    _mem.set_ptt = int(element.value)
+            # set ptt f4hwn
+            elif elname == "set_ptt":
+                _mem.set_ptt = int(element.value)
 
-                # set tot f4hwn
-                elif elname == "set_tot":
-                    _mem.set_tot = int(element.value)
+            # set tot f4hwn
+            elif elname == "set_tot":
+                _mem.set_tot = int(element.value)
 
-                # set eot f4hwn
-                elif elname == "set_eot":
-                    _mem.set_eot = int(element.value)
+            # set eot f4hwn
+            elif elname == "set_eot":
+                _mem.set_eot = int(element.value)
 
-                # set_contrast f4hwn
-                elif elname == "set_contrast":
-                    _mem.set_contrast = int(element.value)
+            # set_contrast f4hwn
+            elif elname == "set_contrast":
+                _mem.set_contrast = int(element.value)
 
-                # set inv f4hwn
-                elif elname == "set_inv":
-                    _mem.set_inv = int(element.value)
+            # set inv f4hwn
+            elif elname == "set_inv":
+                _mem.set_inv = int(element.value)
 
-                # set lck f4hwn
-                elif elname == "set_lck":
-                    _mem.set_lck = int(element.value)
+            # set lck f4hwn
+            elif elname == "set_lck":
+                _mem.set_lck = int(element.value)
 
-                # set met f4hwn
-                elif elname == "set_met":
-                    _mem.set_met = int(element.value)
+            # set met f4hwn
+            elif elname == "set_met":
+                _mem.set_met = int(element.value)
 
-                # set gui f4hwn
-                elif elname == "set_gui":
-                    _mem.set_gui = int(element.value)
+            # set gui f4hwn
+            elif elname == "set_gui":
+                _mem.set_gui = int(element.value)
                                
-                # set tmr f4hwn
-                elif elname == "set_tmr":
-                    _mem.set_tmr = int(element.value)
+            # set tmr f4hwn
+            elif elname == "set_tmr":
+                _mem.set_tmr = int(element.value)
 
-                # set off f4hwn
-                elif elname == "set_off_tmr":
-                    _mem.set_off_tmr = int(element.value)
+            # set off f4hwn
+            elif elname == "set_off_tmr":
+                _mem.set_off_tmr = int(element.value)
 
-                # set nfm f4hwn
-                elif elname == "set_nfm":
-                    _mem.set_nfm = int(element.value)
+            # set nfm f4hwn
+            elif elname == "set_nfm":
+                _mem.set_nfm = int(element.value)
 
-                # set key f4hwn
-                elif elname == "set_key":
-                    _mem.set_key = int(element.value)
+            # set key f4hwn
+            elif elname == "set_key":
+                _mem.set_key = int(element.value)
 
-                 # set menu lock f4hwn
-                elif elname == "set_menu_lock":
-                    _mem.set_menu_lock = int(element.value)
+             # set menu lock f4hwn
+            elif elname == "set_menu_lock":
+                _mem.set_menu_lock = int(element.value)
 
-                # fm radio
-                for i in range(1, 21):
-                    freqname = "FM_" + str(i)
-                    if elname == freqname:
-                        val = str(element.value).strip()
-                        try:
-                            val2 = int(float(val)*10)
-                        except Exception:
-                            val2 = 0xffff
+            # fm radio
+            for i in range(1, 21):
+                freqname = "FM_" + str(i)
+                if elname == freqname:
+                    val = str(element.value).strip()
+                    try:
+                        val2 = int(float(val)*10)
+                    except Exception:
+                        val2 = 0xffff
 
-                        if val2 < FMMIN*10 or val2 > FMMAX*10:
-                            val2 = 0xffff
+                    if val2 < FMMIN*10 or val2 > FMMAX*10:
+                        val2 = 0xffff
 #                        raise errors.InvalidValueError(
 #                                "FM radio frequency should be a value "
 #                                "in the range %.1f - %.1f" % (FMMIN , FMMAX))
-                        _mem.fmfreq[i-1] = val2
+                    _mem.fmfreq[i-1] = val2
 
-                # dtmf settings
-                if elname == "dtmf_side_tone":
-                    _mem.dtmf.side_tone = int(element.value)
+            # dtmf settings
+            if elname == "dtmf_side_tone":
+                _mem.dtmf.side_tone = int(element.value)
 
-                elif elname == "dtmf_separate_code":
-                    _mem.dtmf.separate_code = str(element.value)
+            elif elname == "dtmf_separate_code":
+                _mem.dtmf.separate_code = str(element.value)
 
-                elif elname == "dtmf_group_call_code":
-                    _mem.dtmf.group_call_code = element.value
+            elif elname == "dtmf_group_call_code":
+                _mem.dtmf.group_call_code = element.value
 
-                elif elname == "dtmf_decode_response":
-                    _mem.dtmf.decode_response = int(element.value)
+            elif elname == "dtmf_decode_response":
+                _mem.dtmf.decode_response = int(element.value)
 
-                elif elname == "dtmf_auto_reset_time":
-                    _mem.dtmf.auto_reset_time = int(element.value)
+            elif elname == "dtmf_auto_reset_time":
+                _mem.dtmf.auto_reset_time = int(element.value)
 
-                elif elname == "dtmf_preload_time":
-                    _mem.dtmf.preload_time = int(int(element.value)/10)
+            elif elname == "dtmf_preload_time":
+                _mem.dtmf.preload_time = int(int(element.value)/10)
 
-                elif elname == "dtmf_first_code_persist_time":
-                    _mem.dtmf.first_code_persist_time = int(int(element.value)/10)
+            elif elname == "dtmf_first_code_persist_time":
+                _mem.dtmf.first_code_persist_time = int(int(element.value)/10)
 
-                elif elname == "dtmf_hash_persist_time":
-                    _mem.dtmf.hash_persist_time = int(int(element.value)/10)
+            elif elname == "dtmf_hash_persist_time":
+                _mem.dtmf.hash_persist_time = int(int(element.value)/10)
 
-                elif elname == "dtmf_code_persist_time":
-                    _mem.dtmf.code_persist_time = \
-                            int(int(element.value)/10)
+            elif elname == "dtmf_code_persist_time":
+                _mem.dtmf.code_persist_time = \
+                        int(int(element.value)/10)
 
-                elif elname == "dtmf_code_interval_time":
-                    _mem.dtmf.code_interval_time = \
-                            int(int(element.value)/10)
+            elif elname == "dtmf_code_interval_time":
+                _mem.dtmf.code_interval_time = \
+                        int(int(element.value)/10)
 
-                elif elname == "dtmf_permit_remote_kill":
-                    _mem.dtmf.permit_remote_kill = \
-                            int(element.value)
+            elif elname == "dtmf_permit_remote_kill":
+                _mem.dtmf.permit_remote_kill = \
+                        int(element.value)
 
-                elif elname == "dtmf_dtmf_local_code":
-                    k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*3
-                    _mem.dtmf.local_code = k[0:3]
+            elif elname == "dtmf_dtmf_local_code":
+                k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*3
+                _mem.dtmf.local_code = k[0:3]
 
-                elif elname == "dtmf_dtmf_up_code":
-                    k = str(element.value).strip("\x20\xff\x00") + "\x00"*16
-                    _mem.dtmf.up_code = k[0:16]
+            elif elname == "dtmf_dtmf_up_code":
+                k = str(element.value).strip("\x20\xff\x00") + "\x00"*16
+                _mem.dtmf.up_code = k[0:16]
 
-                elif elname == "dtmf_dtmf_down_code":
-                    k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*16
-                    _mem.dtmf.down_code = k[0:16]
+            elif elname == "dtmf_dtmf_down_code":
+                k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*16
+                _mem.dtmf.down_code = k[0:16]
 
-                elif elname == "dtmf_kill_code":
-                    k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
-                    _mem.dtmf.kill_code = k[0:5]
+            elif elname == "dtmf_kill_code":
+                k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
+                _mem.dtmf.kill_code = k[0:5]
 
-                elif elname == "dtmf_revive_code":
-                    k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
-                    _mem.dtmf.revive_code = k[0:5]
+            elif elname == "dtmf_revive_code":
+                k = str(element.value).strip("\x20\xff\x00") + "\x00"*5
+                _mem.dtmf.revive_code = k[0:5]
 
-                elif elname == "live_DTMF_decoder":
-                    _mem.live_DTMF_decoder = int(element.value)
+            elif elname == "live_DTMF_decoder":
+                _mem.live_DTMF_decoder = int(element.value)
 
-                # dtmf contacts
-                for i in range(1, 17):
-                    varname = "DTMF_" + str(i)
-                    if elname == varname:
-                        k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*8
-                        _mem.dtmfcontact[i-1].name = k[0:8]
+            # dtmf contacts
+            for i in range(1, 17):
+                varname = "DTMF_" + str(i)
+                if elname == varname:
+                    k = str(element.value).rstrip("\x20\xff\x00") + "\x00"*8
+                    _mem.dtmfcontact[i-1].name = k[0:8]
 
-                    varnumname = "DTMFNUM_" + str(i)
-                    if elname == varnumname:
-                        k = str(element.value).rstrip("\x20\xff\x00") + "\xff"*3
-                        _mem.dtmfcontact[i-1].number = k[0:3]
+                varnumname = "DTMFNUM_" + str(i)
+                if elname == varnumname:
+                    k = str(element.value).rstrip("\x20\xff\x00") + "\xff"*3
+                    _mem.dtmfcontact[i-1].number = k[0:3]
 
-                # scanlist stuff
-                if elname == "slDef":
-                    _mem.slDef = int(element.value)
+            # scanlist stuff
+            if elname == "slDef":
+                _mem.slDef = int(element.value)
 
-                elif elname == "sl1PriorEnab":
-                    _mem.sl1PriorEnab = int(element.value)
+            elif elname == "sl1PriorEnab":
+                _mem.sl1PriorEnab = int(element.value)
 
-                elif elname == "sl2PriorEnab":
-                    _mem.sl2PriorEnab = int(element.value)
+            elif elname == "sl2PriorEnab":
+                _mem.sl2PriorEnab = int(element.value)
                 
-                elif elname == "sl3PriorEnab":
-                    _mem.sl3PriorEnab = int(element.value)
+            elif elname == "sl3PriorEnab":
+                _mem.sl3PriorEnab = int(element.value)
 
-                elif elname in ["sl1PriorCh1", "sl1PriorCh2", "sl2PriorCh1",
-                                "sl2PriorCh2", "sl3PriorCh1", "sl3PriorCh2"]:
-                    val = int(element.value)
+            elif elname in ["sl1PriorCh1", "sl1PriorCh2", "sl2PriorCh1",
+                            "sl2PriorCh2", "sl3PriorCh1", "sl3PriorCh2"]:
+                val = int(element.value)
 
-                    if val > 200 or val < 1:
-                        val = 0xff
-                    else:
-                        val -= 1
+                if val > 200 or val < 1:
+                    val = 0xff
+                else:
+                    val -= 1
 
-                    _mem[elname] = val
+                _mem[elname] = val
 
-                if elname == "key1_shortpress_action":
-                    _mem.key1_shortpress_action = KEYACTIONS_LIST.index(element.value)
+            if elname == "key1_shortpress_action":
+                _mem.key1_shortpress_action = KEYACTIONS_LIST.index(element.value)
 
-                elif elname == "key1_longpress_action":
-                    _mem.key1_longpress_action = KEYACTIONS_LIST.index(element.value)
+            elif elname == "key1_longpress_action":
+                _mem.key1_longpress_action = KEYACTIONS_LIST.index(element.value)
 
-                elif elname == "key2_shortpress_action":
-                    _mem.key2_shortpress_action = KEYACTIONS_LIST.index(element.value)
+            elif elname == "key2_shortpress_action":
+                _mem.key2_shortpress_action = KEYACTIONS_LIST.index(element.value)
 
-                elif elname == "key2_longpress_action":
-                    _mem.key2_longpress_action = KEYACTIONS_LIST.index(element.value)
+            elif elname == "key2_longpress_action":
+                _mem.key2_longpress_action = KEYACTIONS_LIST.index(element.value)
 
-                elif elname == "keyM_longpress_action":
-                    _mem.keyM_longpress_action = KEYACTIONS_LIST.index(element.value)
+            elif elname == "keyM_longpress_action":
+                _mem.keyM_longpress_action = KEYACTIONS_LIST.index(element.value)
 
 # this change to send power level chan in the calibration but under macos it give error
 # bugfix calibration : remove the comment on next 2 line:
 #            elif elname == "upload_calibration":
 #                self._upload_calibration = bool(element.value)
 
-                elif hasattr(element, "changed") and element.changed() and \
-                        elname.startswith("_mem.cal."):
-                    exec(elname + " = element.value.get_value()")
-        finally:
-            if is_root:
-                if self._cw_settings_pending:
-                    cwid1 = str(self._cw_settings_pending.get("cwid_1", "")).strip()
-                    cwid2 = str(self._cw_settings_pending.get("cwid_2", "")).strip()
-                    if not cwid1 and not cwid2:
-                        raise InvalidValueError(
-                            "CWID is blank. Please enter at least 1 character.")
-
-                    def _pad_cwid(value):
-                        value = value[:MORSE_CWID_PART_LEN]
-                        return (value + ("\xFF" * MORSE_CWID_PART_LEN))[:MORSE_CWID_PART_LEN]
-
-                    _mem.morse.cwid1 = _pad_cwid(cwid1)
-                    _mem.morse.cwid2 = _pad_cwid(cwid2)
-
-                if _mem.morse.morse_eff_wpm > _mem.morse.morse_wpm:
-                    _mem.morse.morse_eff_wpm = _mem.morse.morse_wpm
-
-                del self._cw_settings_pending
+            elif element.changed() and elname.startswith("_mem.cal."):
+                exec(elname + " = element.value.get_value()")
 
     def get_settings(self):
         _mem = self._memobj
@@ -1959,12 +2076,16 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             FIRMWARE_VERSION_RADIO = self.FIRMWARE_VERSION
               
             if self.FIRMWARE_VERSION >= Compair1 :
-                if _mem.BUILD_OPTIONS.ENABLE_FMRADIO and not _mem.BUILD_OPTIONS.ENABLE_BANDSCOPE :   
-                    ValFirm = ValFirm + " *** with Broadcast ***"
+                if _mem.BUILD_OPTIONS.ENABLE_FEAT_F4HWN_GAME :   
+                    ValFirm = ValFirm + " Game Edition"
+                elif _mem.BUILD_OPTIONS.ENABLE_FMRADIO and not _mem.BUILD_OPTIONS.ENABLE_BANDSCOPE :   
+                    ValFirm = ValFirm + " Broadcast Edition"
                 elif not _mem.BUILD_OPTIONS.ENABLE_FMRADIO and _mem.BUILD_OPTIONS.ENABLE_BANDSCOPE :          
-                    ValFirm = ValFirm + " *** with BandScope ***"
+                    ValFirm = ValFirm + " BandScope Edition"
+                elif _mem.BUILD_OPTIONS.ENABLE_FMRADIO and _mem.BUILD_OPTIONS.ENABLE_BANDSCOPE :          
+                    ValFirm = ValFirm + " Basic Edition"
                 elif _mem.BUILD_OPTIONS.ENABLE_FEAT_F4HWN_RESCUE_OPS :   
-                    ValFirm = ValFirm + " *** with RescueOps ***"
+                    ValFirm = ValFirm + " RescueOps Edition"
         radio_firmware = RadioSettingGroup("radio_firmwarebasic", ValFirm)
 # add link for mise a jour information
 
@@ -1991,8 +2112,8 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         
         basic = RadioSettingGroup("basic", "Basic Settings")
         advanced = RadioSettingGroup("advanced", "Advanced Settings")
-        cw = RadioSettingGroup("cw", "CW/Morse Settings")
         keya = RadioSettingGroup("keya", "Programmable Keys")
+        cw = RadioSettingGroup("cw", "CW/Morse Settings")
         dtmf = RadioSettingGroup("dtmf", "DTMF Settings")
         dtmfc = RadioSettingGroup("dtmfc", "DTMF Contacts")
         scanl = RadioSettingGroup("scn", "Scan Lists")
@@ -2006,8 +2127,8 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         top.append(radio_firmware)
         top.append(basic)
         top.append(advanced)
-        top.append(cw)
         top.append(keya)
+        top.append(cw)
         top.append(dtmf)
         if _mem.BUILD_OPTIONS.ENABLE_DTMF_CALLING:
             top.append(dtmfc)
@@ -2036,9 +2157,9 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
             has_alarm = self._memobj.BUILD_OPTIONS.ENABLE_ALARM
             has_1750 = self._memobj.BUILD_OPTIONS.ENABLE_TX1750
             has_flashlight = self._memobj.BUILD_OPTIONS.ENABLE_FLASHLIGHT
-            has_backlight_off = self._memobj.BUILD_OPTIONS.ENABLE_BLMIN_TMP_OFF
             has_fm_radio = self._memobj.BUILD_OPTIONS.ENABLE_FMRADIO
             has_rescue_ops = self._memobj.BUILD_OPTIONS.ENABLE_FEAT_F4HWN_RESCUE_OPS
+            has_game = self._memobj.BUILD_OPTIONS.ENABLE_FEAT_F4HWN_GAME
             has_vox = self._memobj.BUILD_OPTIONS.ENABLE_VOX
             
             lst = KEYACTIONS_LIST.copy()
@@ -2050,8 +2171,6 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
                 lst.remove("1750Hz TONE")
             if not has_flashlight:
                 lst.remove("FLASHLIGHT")
-            if not has_backlight_off:
-                lst.remove("Put the backlight OFF temporarily (BL_MIN_TMP_OFF)")
             if not has_fm_radio:
                 lst.remove("FM RADIO")
             if not has_rescue_ops:
@@ -2102,13 +2221,36 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         keya.append(rs)
 
         # ----------------- CW/Morse settings
+        def _clean_cwid(value):
+            if isinstance(value, (bytes, bytearray)):
+                raw = bytes(value)
+            elif hasattr(value, "value"):
+                raw = value.value
+            elif isinstance(value, str):
+                raw = value.encode("latin-1", errors="ignore")
+            elif isinstance(value, slice):
+                raw = b""
+            else:
+                raw = str(value).encode("latin-1", errors="ignore")
+            if isinstance(raw, (bytes, bytearray)):
+                raw = raw.replace(b"\x00", b" ").replace(b"\xFF", b" ")
+                return raw.decode("latin-1", errors="ignore").strip()
+            return str(raw).strip()
 
-        cwid_1 = str(_mem.morse.cwid1).strip("\x00\xff")
-        cwid_2 = str(_mem.morse.cwid2).strip("\x00\xff")
-        if not cwid_1.strip():
-            cwid_1 = ""
-        if not cwid_2.strip():
-            cwid_2 = ""
+        try:
+            mmap = self.get_mmap()
+            if not isinstance(mmap, slice):
+                 raw_cwid1 = mmap[MORSE_START:MORSE_START+10]
+                 raw_cwid2 = mmap[MORSE_START+10:MORSE_START+20]
+            else:
+                 raw_cwid1 = b""
+                 raw_cwid2 = b""
+        except Exception:
+            raw_cwid1 = b""
+            raw_cwid2 = b""
+            
+        cwid_1 = _clean_cwid(raw_cwid1)
+        cwid_2 = _clean_cwid(raw_cwid2)
 
         val = RadioSettingValueString(0, MORSE_CWID_PART_LEN, cwid_1)
         val.set_charset(chirp_common.CHARSET_ASCII)
@@ -2122,43 +2264,41 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
         cwid_2_setting.set_doc('CWID2: Second part of CW ID (max 10 chars). Leave blank to use only part 1.')
         cw.append(cwid_2_setting)
 
-        morse_wpm = min_max_def(_mem.morse.morse_wpm, MORSE_WPM_MIN,
-                                MORSE_WPM_MAX, MORSE_WPM_DEFAULT)
-        val = RadioSettingValueInteger(MORSE_WPM_MIN, MORSE_WPM_MAX, morse_wpm)
-        cw_wpm_setting = RadioSetting("cw_wpm", "CW Speed (WPM)", val)
+        def _get_int(val, default):
+            try:
+                if isinstance(val, int): return val
+                if hasattr(val, "value"): return int(val.value)
+                return int(val)
+            except: return default
+
+        wpm = min_max_def(_get_int(_mem.morse.morse_wpm, MORSE_WPM_DEFAULT), MORSE_WPM_MIN, MORSE_WPM_MAX, MORSE_WPM_DEFAULT)
+        val = RadioSettingValueInteger(MORSE_WPM_MIN, MORSE_WPM_MAX, wpm)
+        cw_wpm_setting = RadioSetting("morse_wpm", "CW Speed (WPM)", val)
         cw_wpm_setting.set_doc('CW WPM: Keying speed in words per minute')
         cw.append(cw_wpm_setting)
 
-        morse_eff_wpm = min_max_def(_mem.morse.morse_eff_wpm, MORSE_EFF_WPM_MIN,
-                                    MORSE_EFF_WPM_MAX, MORSE_EFF_WPM_DEFAULT)
-        if morse_eff_wpm > morse_wpm:
-            morse_eff_wpm = morse_wpm
-        val = RadioSettingValueInteger(MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, morse_eff_wpm)
-        cw_eff_wpm_setting = RadioSetting("cw_eff_wpm", "CW Effective Speed (WPM)", val)
+        eff_wpm = min_max_def(_get_int(_mem.morse.morse_eff_wpm, MORSE_EFF_WPM_DEFAULT), MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, MORSE_EFF_WPM_DEFAULT)
+        if eff_wpm > wpm: eff_wpm = wpm
+        val = RadioSettingValueInteger(MORSE_EFF_WPM_MIN, MORSE_EFF_WPM_MAX, eff_wpm)
+        cw_eff_wpm_setting = RadioSetting("morse_eff_wpm", "CW Effective Speed (WPM)", val)
         cw_eff_wpm_setting.set_doc('CW Effective WPM: Must be less than or equal to CW Speed')
         cw.append(cw_eff_wpm_setting)
 
-        morse_tone_hz = min_max_def(_mem.morse.morse_tone_hz, MORSE_TONE_HZ_MIN,
-                                    MORSE_TONE_HZ_MAX, MORSE_TONE_HZ_DEFAULT)
-        val = RadioSettingValueInteger(MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, morse_tone_hz,
-                                       MORSE_TONE_HZ_STEP)
-        cw_tone_setting = RadioSetting("cw_tone_hz", "CW Tone (Hz)", val)
+        tone_hz = min_max_def(_get_int(_mem.morse.morse_tone_hz, MORSE_TONE_HZ_DEFAULT), MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, MORSE_TONE_HZ_DEFAULT)
+        val = RadioSettingValueInteger(MORSE_TONE_HZ_MIN, MORSE_TONE_HZ_MAX, tone_hz, MORSE_TONE_HZ_STEP)
+        cw_tone_setting = RadioSetting("morse_tone_hz", "CW Tone (Hz)", val)
         cw_tone_setting.set_doc('CW Tone: Sidetone frequency in Hz')
         cw.append(cw_tone_setting)
 
-        morse_beep_ms = min_max_def(_mem.morse.morse_beep_ms, MORSE_BEEP_INTERVAL_MIN_MS,
-                                    MORSE_BEEP_INTERVAL_MAX_MS, MORSE_BEEP_INTERVAL_DEFAULT_MS)
-        val = RadioSettingValueInteger(MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS,
-                                       morse_beep_ms, MORSE_BEEP_INTERVAL_STEP_MS)
-        cw_beep_setting = RadioSetting("cw_beep_ms", "CW Beep Interval (ms)", val)
+        beep_ms = min_max_def(_get_int(_mem.morse.morse_beep_ms, MORSE_BEEP_INTERVAL_DEFAULT_MS), MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS, MORSE_BEEP_INTERVAL_DEFAULT_MS)
+        val = RadioSettingValueInteger(MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS, beep_ms, MORSE_BEEP_INTERVAL_STEP_MS)
+        cw_beep_setting = RadioSetting("morse_beep_ms", "CW Beep Interval (ms)", val)
         cw_beep_setting.set_doc('CW Beep: Interval in milliseconds between CW transmissions')
         cw.append(cw_beep_setting)
 
-        morse_stop_ms = min_max_def(_mem.morse.morse_stop_ms, MORSE_STOP_INTERVAL_MIN_MS,
-                                    MORSE_STOP_INTERVAL_MAX_MS, MORSE_STOP_INTERVAL_DEFAULT_MS)
-        val = RadioSettingValueInteger(MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS,
-                                       morse_stop_ms, 1000)
-        cw_stop_setting = RadioSetting("cw_stop_ms", "CW Stop Interval (ms)", val)
+        stop_ms = min_max_def(_get_int(_mem.morse.morse_stop_ms, MORSE_STOP_INTERVAL_DEFAULT_MS), MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS, MORSE_STOP_INTERVAL_DEFAULT_MS)
+        val = RadioSettingValueInteger(MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS, stop_ms, 1000)
+        cw_stop_setting = RadioSetting("morse_stop_ms", "CW Stop Interval (ms)", val)
         cw_stop_setting.set_doc('CW Stop: Delay after a CW transmission in milliseconds')
         cw.append(cw_stop_setting)
 

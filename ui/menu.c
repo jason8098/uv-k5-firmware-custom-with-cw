@@ -1042,8 +1042,14 @@ void UI_DisplayMenu(void)
         }
 
         case MENU_CW_INT:
-            sprintf(String, "%us", gSubMenuSelection);
+        {
+            const uint16_t half_seconds = (uint16_t)gSubMenuSelection;
+            if ((half_seconds % 2u) == 0u)
+                sprintf(String, "%us", (unsigned)(half_seconds / 2u));
+            else
+                sprintf(String, "%u.5s", (unsigned)(half_seconds / 2u));
             break;
+        }
 
         case MENU_ROGER:
             strcpy(String, gSubMenu_ROGER[gSubMenuSelection]);

@@ -302,8 +302,8 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             break;
 
         case MENU_CW_INT:
-            *pMin = MORSE_STOP_INTERVAL_MIN_MS / 1000u;
-            *pMax = MORSE_STOP_INTERVAL_MAX_MS / 1000u;
+            *pMin = MORSE_STOP_INTERVAL_MIN_MS / 500u;
+            *pMax = MORSE_STOP_INTERVAL_MAX_MS / 500u;
             break;
 
         #ifdef ENABLE_VOX
@@ -862,7 +862,7 @@ void MENU_AcceptSetting(void)
         }
 
         case MENU_CW_INT:
-            morse_stop_interval_ms = (uint16_t)gSubMenuSelection * 1000u;
+            morse_stop_interval_ms = (uint16_t)gSubMenuSelection * 500u;
             break;
 
         case MENU_ROGER:
@@ -1353,9 +1353,9 @@ void MENU_ShowCurrentSetting(void)
             break;
 
         case MENU_CW_INT:
-            gSubMenuSelection = morse_stop_interval_ms / 1000u;
+            gSubMenuSelection = morse_stop_interval_ms / 500u;
             if (gSubMenuSelection == 0)
-                gSubMenuSelection = MORSE_STOP_INTERVAL_MIN_MS / 1000u;
+                gSubMenuSelection = MORSE_STOP_INTERVAL_MIN_MS / 500u;
             break;
 
         case MENU_ROGER:

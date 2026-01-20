@@ -2283,13 +2283,13 @@ class UVK5RadioEgzumer(chirp_common.CloneModeRadio):
 
         beep_ms = min_max_def(_get_int(_mem.morse.morse_beep_ms, MORSE_BEEP_INTERVAL_DEFAULT_MS), MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS, MORSE_BEEP_INTERVAL_DEFAULT_MS)
         val = RadioSettingValueInteger(MORSE_BEEP_INTERVAL_MIN_MS, MORSE_BEEP_INTERVAL_MAX_MS, beep_ms, MORSE_BEEP_INTERVAL_STEP_MS)
-        cw_beep_setting = RadioSetting("morse_beep_ms", "CW Beep Interval (ms)", val)
+        cw_beep_setting = RadioSetting("morse_beep_ms", "CW Beep Time (ms)", val)
         cw_beep_setting.set_doc('CW Beep: Interval in milliseconds between CW transmissions')
         cw.append(cw_beep_setting)
 
         stop_ms = min_max_def(_get_int(_mem.morse.morse_stop_ms, MORSE_STOP_INTERVAL_DEFAULT_MS), MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS, MORSE_STOP_INTERVAL_DEFAULT_MS)
         val = RadioSettingValueInteger(MORSE_STOP_INTERVAL_MIN_MS, MORSE_STOP_INTERVAL_MAX_MS, stop_ms, 1000)
-        cw_stop_setting = RadioSetting("morse_stop_ms", "CW Stop Interval (ms)", val)
+        cw_stop_setting = RadioSetting("morse_stop_ms", "CW Wait Time (ms)", val)
         cw_stop_setting.set_doc('CW Stop: Delay after a CW transmission in milliseconds')
         cw.append(cw_stop_setting)
 

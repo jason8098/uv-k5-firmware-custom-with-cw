@@ -709,7 +709,8 @@ void SETTINGS_FactoryReset(bool bIsAll)
 #endif
         EEPROM_WriteBuffer(EEPROM_ADDR_MORSE, Template);
         EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 8u, Template);
-        EEPROM_WriteBuffer(EEPROM_ADDR_MORSE_EXTRA, Template);
+        EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 16u, Template);
+        EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 24u, Template);
     }
 }
 

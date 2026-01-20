@@ -43,6 +43,13 @@ const t_menu_item MenuList[] =
 //   text,          menu ID
     {"Step",        MENU_STEP          },
     {"Power",       MENU_TXP           }, // was "TXP"
+    {"CWID1",       MENU_CWID1         },
+    {"CWID2",       MENU_CWID2         },
+    {"CW WPM",      MENU_CW_WPM        },
+    {"CW Eff",      MENU_CW_EFF        },
+    {"CWTone",      MENU_CW_TONE       },
+    {"CWBeep",      MENU_CW_BEEP       },
+    {"CWInt",       MENU_CW_INT        },
     {"RxDCS",       MENU_R_DCS         }, // was "R_DCS"
     {"RxCTCS",      MENU_R_CTCS        }, // was "R_CTCS"
     {"TxDCS",       MENU_T_DCS         }, // was "T_DCS"
@@ -90,13 +97,6 @@ const t_menu_item MenuList[] =
     {"MicBar",      MENU_MIC_BAR       },
     {"ChDisp",      MENU_MDF           }, // was "MDF"
     {"POnMsg",      MENU_PONMSG        },
-    {"CWID1",       MENU_CWID1         },
-    {"CWID2",       MENU_CWID2         },
-    {"CW WPM",      MENU_CW_WPM        },
-    {"CW Eff",      MENU_CW_EFF        },
-    {"CWTone",      MENU_CW_TONE       },
-    {"CWBeep",      MENU_CW_BEEP       },
-    {"CWInt",       MENU_CW_INT        },
     {"BLTime",      MENU_ABR           }, // was "ABR"
     {"BLMin",       MENU_ABR_MIN       },
     {"BLMax",       MENU_ABR_MAX       },

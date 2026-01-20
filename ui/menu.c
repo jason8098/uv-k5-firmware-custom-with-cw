@@ -1032,12 +1032,11 @@ void UI_DisplayMenu(void)
 
         case MENU_CW_BEEP:
         {
-            const uint16_t seconds = (uint16_t)(gSubMenuSelection / 10);
-            const uint16_t tenths = (uint16_t)(gSubMenuSelection % 10);
-            if (tenths == 0)
-                sprintf(String, "%us", seconds);
+            const uint16_t half_seconds = (uint16_t)gSubMenuSelection;
+            if ((half_seconds % 2u) == 0u)
+                sprintf(String, "%us", (unsigned)(half_seconds / 2u));
             else
-                sprintf(String, "%u.%us", seconds, tenths);
+                sprintf(String, "%u.5s", (unsigned)(half_seconds / 2u));
             break;
         }
 

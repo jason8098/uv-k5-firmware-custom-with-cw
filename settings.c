@@ -28,15 +28,15 @@
 #include "settings.h"
 #include "ui/menu.h"
 
-#define EEPROM_ADDR_MORSE 0x1FE0
-#define EEPROM_MORSE_SIZE 16u
-#define EEPROM_MORSE_WPM_OFFSET 10u
-#define EEPROM_MORSE_STOP_MS_OFFSET 11u
-#define EEPROM_MORSE_EFF_WPM_OFFSET 13u
-#define EEPROM_MORSE_BEEP_MS_OFFSET 14u
-#define EEPROM_ADDR_MORSE_EXTRA 0x1FD8
-#define EEPROM_MORSE_EXTRA_SIZE 8u
-#define EEPROM_MORSE_TONE_HZ_OFFSET 0u
+#define EEPROM_ADDR_MORSE 0x1FD0
+#define EEPROM_MORSE_SIZE 32u
+#define EEPROM_MORSE_CWID1_OFFSET 0u
+#define EEPROM_MORSE_CWID2_OFFSET 10u
+#define EEPROM_MORSE_WPM_OFFSET 20u
+#define EEPROM_MORSE_STOP_MS_OFFSET 21u
+#define EEPROM_MORSE_EFF_WPM_OFFSET 23u
+#define EEPROM_MORSE_BEEP_MS_OFFSET 24u
+#define EEPROM_MORSE_TONE_HZ_OFFSET 26u
 
 #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
 static const uint32_t gDefaultFrequencyTable[] =
@@ -52,31 +52,50 @@ static const uint32_t gDefaultFrequencyTable[] =
 static void SETTINGS_LoadMorse(void)
 {
     uint8_t data[EEPROM_MORSE_SIZE];
-    uint8_t extra[EEPROM_MORSE_EXTRA_SIZE];
     size_t len = 0;
 
     EEPROM_ReadBuffer(EEPROM_ADDR_MORSE, data, sizeof(data));
-    EEPROM_ReadBuffer(EEPROM_ADDR_MORSE_EXTRA, extra, sizeof(extra));
 
-    for (size_t i = 0; i < MORSE_CWID_MAX_LEN; i++) {
-        const uint8_t c = data[i];
+    for (size_t i = 0; i < MORSE_CWID_PART_LEN; i++) {
+        const uint8_t c = data[EEPROM_MORSE_CWID1_OFFSET + i];
         if (c == 0xFF || c == 0x00)
             break;
         if (c < 32 || c > 126) {
             len = 0;
             break;
         }
-        cwid_m[i] = (char)c;
+        cwid1_m[i] = (char)c;
         len++;
     }
 
     if (len == 0) {
-        strncpy(cwid_m, MORSE_CWID_DEFAULT, MORSE_CWID_MAX_LEN);
-        cwid_m[MORSE_CWID_MAX_LEN] = 0;
+        strncpy(cwid1_m, MORSE_CWID_DEFAULT, MORSE_CWID_PART_LEN);
+        cwid1_m[MORSE_CWID_PART_LEN] = 0;
     } else {
-        cwid_m[len] = 0;
-        while (len > 0 && cwid_m[len - 1] == ' ')
-            cwid_m[--len] = 0;
+        cwid1_m[len] = 0;
+        while (len > 0 && cwid1_m[len - 1] == ' ')
+            cwid1_m[--len] = 0;
+    }
+
+    len = 0;
+    for (size_t i = 0; i < MORSE_CWID_PART_LEN; i++) {
+        const uint8_t c = data[EEPROM_MORSE_CWID2_OFFSET + i];
+        if (c == 0xFF || c == 0x00)
+            break;
+        if (c < 32 || c > 126) {
+            len = 0;
+            break;
+        }
+        cwid2_m[i] = (char)c;
+        len++;
+    }
+
+    if (len == 0) {
+        cwid2_m[0] = 0;
+    } else {
+        cwid2_m[len] = 0;
+        while (len > 0 && cwid2_m[len - 1] == ' ')
+            cwid2_m[--len] = 0;
     }
 
     if (data[EEPROM_MORSE_WPM_OFFSET] < MORSE_WPM_MIN ||
@@ -97,8 +116,8 @@ static void SETTINGS_LoadMorse(void)
 
     {
         const uint16_t tone_hz =
-            (uint16_t)extra[EEPROM_MORSE_TONE_HZ_OFFSET] |
-            ((uint16_t)extra[EEPROM_MORSE_TONE_HZ_OFFSET + 1] << 8);
+            (uint16_t)data[EEPROM_MORSE_TONE_HZ_OFFSET] |
+            ((uint16_t)data[EEPROM_MORSE_TONE_HZ_OFFSET + 1] << 8);
         if (tone_hz < MORSE_TONE_HZ_MIN || tone_hz > MORSE_TONE_HZ_MAX)
             morse_tone_hz = MORSE_TONE_HZ_DEFAULT;
         else
@@ -129,7 +148,6 @@ static void SETTINGS_LoadMorse(void)
 static void SETTINGS_SaveMorse(void)
 {
     uint8_t data[EEPROM_MORSE_SIZE];
-    uint8_t extra[EEPROM_MORSE_EXTRA_SIZE];
     size_t len;
     uint8_t wpm = morse_wpm;
     uint8_t eff_wpm = morse_wpm_effective;
@@ -151,10 +169,15 @@ static void SETTINGS_SaveMorse(void)
         stop_ms = MORSE_STOP_INTERVAL_DEFAULT_MS;
 
     memset(data, 0xFF, sizeof(data));
-    len = strlen(cwid_m);
-    if (len > MORSE_CWID_MAX_LEN)
-        len = MORSE_CWID_MAX_LEN;
-    memcpy(data, cwid_m, len);
+    len = strnlen(cwid1_m, MORSE_CWID_PART_LEN);
+    if (len > MORSE_CWID_PART_LEN)
+        len = MORSE_CWID_PART_LEN;
+    memcpy(data + EEPROM_MORSE_CWID1_OFFSET, cwid1_m, len);
+
+    len = strnlen(cwid2_m, MORSE_CWID_PART_LEN);
+    if (len > MORSE_CWID_PART_LEN)
+        len = MORSE_CWID_PART_LEN;
+    memcpy(data + EEPROM_MORSE_CWID2_OFFSET, cwid2_m, len);
 
     data[EEPROM_MORSE_WPM_OFFSET] = wpm;
     data[EEPROM_MORSE_EFF_WPM_OFFSET] = eff_wpm;
@@ -163,13 +186,13 @@ static void SETTINGS_SaveMorse(void)
     data[EEPROM_MORSE_STOP_MS_OFFSET] = (uint8_t)(stop_ms & 0xFFu);
     data[EEPROM_MORSE_STOP_MS_OFFSET + 1] = (uint8_t)((stop_ms >> 8) & 0xFFu);
 
-    memset(extra, 0xFF, sizeof(extra));
-    extra[EEPROM_MORSE_TONE_HZ_OFFSET] = (uint8_t)(tone_hz & 0xFFu);
-    extra[EEPROM_MORSE_TONE_HZ_OFFSET + 1] = (uint8_t)((tone_hz >> 8) & 0xFFu);
+    data[EEPROM_MORSE_TONE_HZ_OFFSET] = (uint8_t)(tone_hz & 0xFFu);
+    data[EEPROM_MORSE_TONE_HZ_OFFSET + 1] = (uint8_t)((tone_hz >> 8) & 0xFFu);
 
     EEPROM_WriteBuffer(EEPROM_ADDR_MORSE, data);
     EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 8u, data + 8u);
-    EEPROM_WriteBuffer(EEPROM_ADDR_MORSE_EXTRA, extra);
+    EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 16u, data + 16u);
+    EEPROM_WriteBuffer(EEPROM_ADDR_MORSE + 24u, data + 24u);
 
     morse_wpm = wpm;
     morse_wpm_effective = eff_wpm;

@@ -812,9 +812,12 @@ void MENU_AcceptSetting(void)
             gEeprom.POWER_ON_DISPLAY_MODE = gSubMenuSelection;
             break;
 
-        case MENU_CWID:
+        case MENU_CWID1:
+        case MENU_CWID2:
             {
-            const int cwid_max = (int)MORSE_CWID_MAX_LEN;
+            const int cwid_max = (int)MORSE_CWID_PART_LEN;
+            char *target = (menu_id == MENU_CWID1) ? cwid1_m : cwid2_m;
+
             for (int i = cwid_max - 1; i >= 0; i--) {
                 if (edit[i] != ' ' && edit[i] != '_' && edit[i] != 0x00 && edit[i] != 0xff)
                     break;
@@ -823,14 +826,14 @@ void MENU_AcceptSetting(void)
             for (int i = 0; i < cwid_max; i++) {
                 if (edit[i] == '_')
                     edit[i] = ' ';
-                cwid_m[i] = edit[i];
+                target[i] = edit[i];
             }
-            cwid_m[MORSE_CWID_MAX_LEN] = 0;
-            for (int i = cwid_max - 1; i >= 0 && cwid_m[i] == ' '; i--)
-                cwid_m[i] = 0;
-            if (cwid_m[0] == 0) {
-                strncpy(cwid_m, MORSE_CWID_DEFAULT, MORSE_CWID_MAX_LEN);
-                cwid_m[MORSE_CWID_MAX_LEN] = 0;
+            target[MORSE_CWID_PART_LEN] = 0;
+            for (int i = cwid_max - 1; i >= 0 && target[i] == ' '; i--)
+                target[i] = 0;
+            if (menu_id == MENU_CWID1 && target[0] == 0) {
+                strncpy(target, MORSE_CWID_DEFAULT, MORSE_CWID_PART_LEN);
+                target[MORSE_CWID_PART_LEN] = 0;
             }
             }
             break;
@@ -1542,10 +1545,10 @@ static void MENU_Key_0_to_9(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
 
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 
-    if ((menu_id == MENU_MEM_NAME || menu_id == MENU_CWID) && edit_index >= 0)
+    if ((menu_id == MENU_MEM_NAME || menu_id == MENU_CWID1 || menu_id == MENU_CWID2) && edit_index >= 0)
     {   // currently editing the channel name
 
-        const uint8_t max_len = (menu_id == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+        const uint8_t max_len = (menu_id == MENU_MEM_NAME) ? 10 : MORSE_CWID_PART_LEN;
 
         if (edit_index < max_len)
         {
@@ -1843,14 +1846,15 @@ static void MENU_Key_MENU(const bool bKeyPressed, const bool bKeyHeld)
         }
     }
 
-    if (menu_id == MENU_CWID)
+    if (menu_id == MENU_CWID1 || menu_id == MENU_CWID2)
     {
-        const int cwid_max = (int)MORSE_CWID_MAX_LEN;
+        const int cwid_max = (int)MORSE_CWID_PART_LEN;
+        const char *source = (menu_id == MENU_CWID1) ? cwid1_m : cwid2_m;
 
         if (edit_index < 0)
         {   // enter CWID edit mode
-            strncpy(edit, cwid_m, MORSE_CWID_MAX_LEN);
-            edit[MORSE_CWID_MAX_LEN] = 0;
+            strncpy(edit, source, MORSE_CWID_PART_LEN);
+            edit[MORSE_CWID_PART_LEN] = 0;
 
             edit_index = strlen(edit);
             while (edit_index < cwid_max)
@@ -1944,10 +1948,10 @@ static void MENU_Key_STAR(const bool bKeyPressed, const bool bKeyHeld)
 
     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 
-    if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID) && edit_index >= 0)
+    if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID1 || UI_MENU_GetCurrentMenuId() == MENU_CWID2) && edit_index >= 0)
     {   // currently editing the channel name
 
-        const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+        const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME) ? 10 : MORSE_CWID_PART_LEN;
 
         if (edit_index < max_len)
         {
@@ -1994,9 +1998,9 @@ static void MENU_Key_UP_DOWN(bool bKeyPressed, bool bKeyHeld, int8_t Direction)
     uint8_t Channel;
     bool    bCheckScanList;
 
-    if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID) && gIsInSubMenu && edit_index >= 0)
+    if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID1 || UI_MENU_GetCurrentMenuId() == MENU_CWID2) && gIsInSubMenu && edit_index >= 0)
     {   // change the character
-        const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+        const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME) ? 10 : MORSE_CWID_PART_LEN;
 
         if (bKeyPressed && edit_index < max_len && Direction != 0)
         {
@@ -2138,12 +2142,14 @@ void MENU_ProcessKeys(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld)
             MENU_Key_STAR(bKeyPressed, bKeyHeld);
             break;
         case KEY_F:
-            if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID) && edit_index >= 0)
+            if ((UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME || UI_MENU_GetCurrentMenuId() == MENU_CWID1 || UI_MENU_GetCurrentMenuId() == MENU_CWID2) && edit_index >= 0)
             {   // currently editing the channel name
                 if (!bKeyHeld && bKeyPressed)
                 {
                     gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
-                    const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID) ? MORSE_CWID_MAX_LEN : 10;
+                    const uint8_t max_len = (UI_MENU_GetCurrentMenuId() == MENU_CWID1 || UI_MENU_GetCurrentMenuId() == MENU_CWID2)
+                        ? MORSE_CWID_PART_LEN
+                        : 10;
                     if (edit_index < max_len)
                     {
                         edit[edit_index] = ' ';

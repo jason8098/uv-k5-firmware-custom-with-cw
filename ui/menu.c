@@ -90,7 +90,8 @@ const t_menu_item MenuList[] =
     {"MicBar",      MENU_MIC_BAR       },
     {"ChDisp",      MENU_MDF           }, // was "MDF"
     {"POnMsg",      MENU_PONMSG        },
-    {"CWID",        MENU_CWID          },
+    {"CWID1",       MENU_CWID1         },
+    {"CWID2",       MENU_CWID2         },
     {"CW WPM",      MENU_CW_WPM        },
     {"CW Eff",      MENU_CW_EFF        },
     {"CWTone",      MENU_CW_TONE       },
@@ -1000,19 +1001,21 @@ void UI_DisplayMenu(void)
             strcpy(String, gSubMenu_PONMSG[gSubMenuSelection]);
             break;
 
-        case MENU_CWID:
+        case MENU_CWID1:
+        case MENU_CWID2:
         {
             if (!gIsInSubMenu)
                 edit_index = -1;
             if (edit_index < 0)
             {
-                const char *pPrintStr = cwid_m[0] ? cwid_m : "--";
+                const char *cwid = (menu_id == MENU_CWID1) ? cwid1_m : cwid2_m;
+                const char *pPrintStr = cwid[0] ? cwid : "--";
                 UI_PrintString(pPrintStr, menu_item_x1, menu_item_x2, 2, 8);
             }
             else
             {
                 UI_PrintString(edit, menu_item_x1, menu_item_x2, 2, 8);
-                if (edit_index < (int)MORSE_CWID_MAX_LEN)
+                if (edit_index < (int)MORSE_CWID_PART_LEN)
                     UI_PrintString("^", menu_item_x1 - 1 + (8 * edit_index), 0, 4, 8);
             }
             already_printed = true;

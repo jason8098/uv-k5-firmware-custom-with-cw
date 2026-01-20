@@ -99,7 +99,8 @@ enum
 #endif
     MENU_D_LIVE_DEC,
     MENU_PONMSG,
-    MENU_CWID,
+    MENU_CWID1,
+    MENU_CWID2,
     MENU_CW_WPM,
     MENU_CW_EFF,
     MENU_CW_TONE,

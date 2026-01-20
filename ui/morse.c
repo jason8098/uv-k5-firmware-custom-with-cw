@@ -23,7 +23,7 @@ void UI_DisplayMORSE(void)
     snprintf_(String, sizeof(String), "FOX TX v%s", morseVersion);
     pPrintStr = String;
     UI_PrintStringSmallBold(pPrintStr, 0, 0, 0);
-    snprintf_(String, sizeof(String), "CW: %s", cwid_m);
+    snprintf_(String, sizeof(String), "CW: %s", MORSE_GetCombinedCwid());
     pPrintStr = String;
     UI_PrintStringSmallBold(String, 0, 0, 1);
 

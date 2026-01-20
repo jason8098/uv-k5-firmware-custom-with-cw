@@ -23,7 +23,34 @@
 
 int txstatus =0;
 bool txen = false;
-char cwid_m[MORSE_CWID_MAX_LEN + 1] = MORSE_CWID_DEFAULT;
+char cwid1_m[MORSE_CWID_PART_LEN + 1] = MORSE_CWID_DEFAULT;
+char cwid2_m[MORSE_CWID_PART_LEN + 1] = "";
+
+const char *MORSE_GetCombinedCwid(void)
+{
+    static char combined[MORSE_CWID_TOTAL_LEN + 1];
+    size_t len1;
+    size_t len2;
+
+    len1 = strnlen(cwid1_m, MORSE_CWID_PART_LEN);
+    len2 = strnlen(cwid2_m, MORSE_CWID_PART_LEN);
+
+    while (len1 > 0 && cwid1_m[len1 - 1] == ' ')
+        len1--;
+    while (len2 > 0 && cwid2_m[len2 - 1] == ' ')
+        len2--;
+
+    memcpy(combined, cwid1_m, len1);
+    memcpy(combined + len1, cwid2_m, len2);
+    combined[len1 + len2] = 0;
+
+    if (combined[0] == 0) {
+        strncpy(combined, MORSE_CWID_DEFAULT, MORSE_CWID_TOTAL_LEN);
+        combined[MORSE_CWID_TOTAL_LEN] = 0;
+    }
+
+    return combined;
+}
 
 char* morseVersion = "1.1.0";
 uint8_t morse_wpm = MORSE_WPM_DEFAULT;
@@ -322,7 +349,7 @@ static void MORSE_Key_MENU(bool bKeyPressed, bool bKeyHeld) {
                 txen = false;
                 break;
             }
-            TransmitMorse(cwid_m);
+            TransmitMorse(MORSE_GetCombinedCwid());
             MORSE_StopTx();
             morseDelay(morse_stop_interval_ms); 
         }

@@ -6,7 +6,8 @@
 #include <stdint.h>
 #include "driver/keyboard.h"
 
-#define MORSE_CWID_MAX_LEN 10u
+#define MORSE_CWID_PART_LEN 10u
+#define MORSE_CWID_TOTAL_LEN 20u
 #define MORSE_CWID_DEFAULT "DE N0CALL"
 #define MORSE_WPM_DEFAULT 15u
 #define MORSE_WPM_MIN 5u
@@ -36,7 +37,9 @@ void GUI_ShowMorseScreen(void);
 
 // Global Variables
 extern int txstatus;
-extern char cwid_m[MORSE_CWID_MAX_LEN + 1];
+extern char cwid1_m[MORSE_CWID_PART_LEN + 1];
+extern char cwid2_m[MORSE_CWID_PART_LEN + 1];
+const char *MORSE_GetCombinedCwid(void);
 extern char* morseVersion;
 extern uint8_t morse_wpm;
 extern uint8_t morse_wpm_effective;

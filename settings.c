@@ -28,8 +28,6 @@
 #include "settings.h"
 #include "ui/menu.h"
 
-#define EEPROM_ADDR_MORSE 0x1FD0
-#define EEPROM_MORSE_SIZE 32u
 #define EEPROM_MORSE_CWID1_OFFSET 0u
 #define EEPROM_MORSE_CWID2_OFFSET 10u
 #define EEPROM_MORSE_WPM_OFFSET 20u
@@ -151,6 +149,11 @@ static void SETTINGS_LoadMorse(void)
         else
             morse_stop_interval_ms = stop_ms;
     }
+}
+
+void SETTINGS_ReloadMorse(void)
+{
+    SETTINGS_LoadMorse();
 }
 
 static void SETTINGS_SaveMorse(void)

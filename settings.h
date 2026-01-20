@@ -25,6 +25,9 @@
 #include "radio.h"
 #include <driver/backlight.h>
 
+#define EEPROM_ADDR_MORSE 0x1FD0u
+#define EEPROM_MORSE_SIZE 32u
+
 enum POWER_OnDisplayMode_t {
 #ifdef ENABLE_FEAT_F4HWN
     POWER_ON_DISPLAY_MODE_ALL,
@@ -308,6 +311,7 @@ typedef struct {
 extern EEPROM_Config_t gEeprom;
 
 void     SETTINGS_InitEEPROM(void);
+void     SETTINGS_ReloadMorse(void);
 void     SETTINGS_LoadCalibration(void);
 uint32_t SETTINGS_FetchChannelFrequency(const int channel);
 void     SETTINGS_FetchChannelName(char *s, const int channel);

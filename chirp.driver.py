@@ -1027,11 +1027,20 @@ def do_upload(radio):
                     
         if mstep == 1:   # if the first write mem done , pass to f4hwn value
             morse_data = radio.get_mmap()[MORSE_START:MORSE_START + MORSE_SIZE]
-            _writemem(serport, morse_data, MORSE_START)
+            for i in range(0, MORSE_SIZE, 8):
+                _writemem(serport, morse_data[i:i + 8], MORSE_START + i)
 
             status.max = MEM_SIZE-F4HWN_START
             start_addr = F4HWN_START
             stop_addr = MEM_SIZE
+
+    morse_data = radio.get_mmap()[MORSE_START:MORSE_START + MORSE_SIZE]
+    for i in range(0, MORSE_SIZE, 8):
+        _writemem(serport, morse_data[i:i + 8], MORSE_START + i)
+
+    verify = _readmem(serport, MORSE_START, MORSE_SIZE)
+    if verify[:MORSE_SIZE] != morse_data:
+        raise errors.RadioError("Morse EEPROM write failed")
 
     status.msg = "Uploaded OK"
 

@@ -288,6 +288,7 @@ static void CMD_051D(const uint8_t *pBuffer)
     const CMD_051D_t *pCmd = (const CMD_051D_t *)pBuffer;
     REPLY_051D_t Reply;
     bool bReloadEeprom;
+    bool bReloadMorse;
     bool bIsLocked;
 
     if (pCmd->Timestamp != Timestamp)
@@ -296,6 +297,7 @@ static void CMD_051D(const uint8_t *pBuffer)
     gSerialConfigCountDown_500ms = 12; // 6 sec
     
     bReloadEeprom = false;
+    bReloadMorse = false;
 
     #ifdef ENABLE_FMRADIO
         gFmRadioCountdown_500ms = fm_radio_countdown_500ms;
@@ -318,12 +320,17 @@ static void CMD_051D(const uint8_t *pBuffer)
                 if (!gIsLocked)
                     bReloadEeprom = true;
 
+            if (Offset >= EEPROM_ADDR_MORSE && Offset < (EEPROM_ADDR_MORSE + EEPROM_MORSE_SIZE))
+                bReloadMorse = true;
+
             if ((Offset < 0x0E98 || Offset >= 0x0EA0) || !bIsInLockScreen || pCmd->bAllowPassword)
                 EEPROM_WriteBuffer(Offset, &pCmd->Data[i * 8U]);
         }
 
         if (bReloadEeprom)
             SETTINGS_InitEEPROM();
+        else if (bReloadMorse)
+            SETTINGS_ReloadMorse();
     }
 
     SendReply(&Reply, sizeof(Reply));

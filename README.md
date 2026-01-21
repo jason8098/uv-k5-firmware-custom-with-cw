@@ -9,7 +9,7 @@ I made this mainly for the FOX HUNT beacon purposes. The modulation is FM, so mo
 
 # Photos & Videos
 <img src="images/morse_menu.jpeg" alt="morse screen" width="200"/><br><br>
-Video will be uploaded soon.
+[Demo video by me - 4S7JL Youtube](https://youtu.be/czbjfnymDrc?si=UJAQRbGu7nhtoQbZ)
 
 
 # How it Works?

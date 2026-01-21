@@ -17,7 +17,7 @@ I made this mainly for the FOX HUNT beacon purposes. The modulation is FM, so mo
 - Press Exit to stop the TX.
 
 # Customization (New Update v1.1.0)
-Customization of the CWID can now be done in the Radio menu (No. 4-8) or Via Chirp.<br>
+Customization of the CWID can now be done in the Radio menu (No. 3-8) or Via Chirp.<br>
 You can customize variety of parameters:
 - WPM
 - Tone Frequency in Hz

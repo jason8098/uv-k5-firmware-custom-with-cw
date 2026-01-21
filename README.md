@@ -1,10 +1,8 @@
-# F4HWN Firmware with CW Beacon
+# F4HWN Firmware with CW Beacon Feature.
 This is an implementation/demo of the CW beacon. A custom string and speed in WPM can be set and it will chnage each charactors into the morse code tones while transmitting it.
 PS: Bandscope was replcaed to this due to the capacity issue. 
-<br>
-Contributions are also welcome~
 
-# Use Case
+# Use Case - Concept
 I made this mainly for the FOX HUNT beacon purposes. The modulation is FM, so most of all receivers, handhelds can receive it without any problem. 
 
 # Photos & Videos
@@ -39,3 +37,7 @@ You can customize variety of parameters:
 3. Settings > CW Settings
 4. Edit Parameters you want.
 5. Once done, Click Radio > Upload > OK
+
+# Have you got an Idea or Suggestions?
+Feel free to post it in the discussion tab here or you can emails to me.
+Direct contributions via github is also possible. 
